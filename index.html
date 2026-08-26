@@ -90,6 +90,48 @@
   .hm td.lbl { background:transparent; text-align:left; font-weight:600; font-size:11.5px;
                color:var(--fg); padding:8px 0; }
   .hm .lp { color:var(--sub); font-weight:400; font-size:11px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .gcol h3 { font-size:12.5px; margin:2px 0 6px; color:var(--sub); font-weight:600; }
+  .mv { background:var(--card); border:1px solid var(--line); border-radius:10px;
+        padding:7px 8px; margin-bottom:6px; }
+  .mv .l1 { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--sub); }
+  .mv .l1 b { color:var(--fg); }
+  .mv .l2 { font-size:13px; font-weight:600; margin:3px 0; }
+  .bar { height:6px; border-radius:3px; background:var(--chip); overflow:hidden; }
+  .bar i { display:block; height:100%; border-radius:3px; }
+  .al { background:var(--card); border:1px solid var(--line); border-radius:10px;
+        padding:7px 8px; margin-bottom:6px; }
+  .al .l1 { display:flex; align-items:center; gap:6px; }
+  .al .nm { font-weight:700; font-size:13.5px; }
+  .al .l2 { color:var(--sub); font-size:11.5px; margin-top:3px; display:flex; gap:8px;
+            align-items:center; flex-wrap:wrap; }
+  .gq { display:inline-flex; align-items:center; justify-content:center; min-width:20px;
+        height:18px; border-radius:4px; color:#fff; font-size:11px; font-weight:700; }
+  .nrow { display:flex; align-items:center; gap:8px; background:var(--card);
+          border:1px solid var(--line); border-radius:10px; padding:8px 10px;
+          margin-bottom:7px; }
+  .nrow .t { color:var(--sub); font-size:11.5px; width:88px; flex:none; line-height:1.4; }
+  .nrow .t b { color:var(--fg); font-size:12.5px; }
+  .nrow .h { flex:1; min-width:0; display:flex; align-items:center; gap:6px; }
+  .nrow .h .nm { font-weight:700; font-size:14px; overflow:hidden;
+                 text-overflow:ellipsis; white-space:nowrap; }
+  .vchip { flex:none; border-radius:8px; text-align:center; padding:4px 8px; }
+  .vchip .v { font-weight:700; font-size:14px; }
+  .vchip .k { font-size:9.5px; opacity:.75; }
+  .qrow { display:flex; align-items:center; gap:8px; padding:6px 0;
+          border-top:1px solid var(--line); }
+  .qrow .t { color:var(--sub); font-size:11.5px; width:92px; flex:none; }
+  .qrow .t b { color:var(--fg); font-size:12.5px; }
+  .qbar { flex:1; display:flex; height:12px; border-radius:6px; overflow:hidden;
+          background:var(--chip); }
+  .qbar i { display:block; height:100%; }
+  .qrow .c { flex:none; font-size:10.5px; color:var(--sub); width:88px; text-align:right; }
+  .agrow { display:flex; align-items:center; gap:8px; padding:7px 0;
+           border-top:1px solid var(--line); }
+  .agrow .rk { color:var(--sub); font-size:11.5px; width:18px; text-align:right; }
+  .agrow .nm { font-weight:600; font-size:13.5px; }
+  .agrow .sd { margin-left:auto; color:var(--sub); font-size:11.5px; text-align:right; }
+  .agrow .vv { font-weight:700; font-size:14px; color:var(--fg); }
   .mx { width:100%; border-collapse:separate; border-spacing:3px; table-layout:fixed; }
   .mx th { font-size:10.5px; color:var(--sub); font-weight:600; padding:2px 0; border:0;
            text-align:center; line-height:1.3; background:transparent; }
@@ -109,7 +151,7 @@
   <select id="doc">
     <option value="00_published/P1_TODAY.md">P1選定</option>
     <option value="HEATMAP">P1ヒートマップ</option>
-    <option value="00_published/TODAY.md">TODAY</option>
+    <option value="TODAYV4">TODAY</option>
   </select>
   <button id="reload" title="再読込">更新</button>
 </header>
@@ -372,6 +414,95 @@ function renderToday(md){
   return h.join("");
 }
 
+/* ---------- TODAY(V4/JSON): 専用描画 ---------- */
+const QCOL = {A:"#2e9e4f", B:"#8b95a3", C:"#f28c28", D:"#e63946", "-":"#c9d2de"};
+function gq(g){ return `<span class="gq" style="background:${QCOL[g]||QCOL["-"]}">${esc(g)}</span>`; }
+function renderTodayJson(d){
+  const tabs = [["nerai","狙い別"],["odds","オッズ動向"],
+                ["alerts",`大穴 ${d.alerts.length}頭`],["chokyo","調教"],["agari","上がり上位"]];
+  if (state.ttab >= tabs.length) state.ttab = 0;
+  let h = [`<p class="meta">生成 ${esc(d.generated)}・${esc(d.venues.join(" "))} ${d.races}R</p>`];
+  h.push(`<div class="seg">` + tabs.map((t,i)=>
+    `<button data-f="tt:${i}" class="${state.ttab===i?"on":""}">${t[1]}</button>`).join("") + `</div>`);
+  const key = tabs[state.ttab][0];
+  if (key==="nerai") h.push(renderNerai(d));
+  else if (key==="odds") h.push(renderOddsMoves(d));
+  else if (key==="alerts") h.push(renderAlerts(d));
+  else if (key==="chokyo") h.push(renderChokyo(d));
+  else h.push(renderAgari(d));
+  return h.join("");
+}
+function renderNerai(d){
+  if (!d.p1_available) return `<p class="note">P1表が未生成のため配当条件が判定できません（8時台に自動生成）。</p>`;
+  if (state.ntab === undefined) state.ntab = 0;
+  const n = d.nerai[state.ntab] || d.nerai[0];
+  let h = [`<div class="seg">` + d.nerai.map((x,i)=>
+    `<button data-f="nt:${i}" class="${state.ntab===i?"on":""}">${esc(x.label)}</button>`).join("") + `</div>`];
+  h.push(`<p class="meta">条件: ${esc(n.cond)}・${esc(n.vlabel)}の高い順・全${n.races.length}鞍</p>`);
+  for (const r of n.races){
+    const [bg,fg] = heat(r.value);
+    h.push(`<div class="nrow">
+      <div class="t"><b>${esc(r.time||"-")} ${esc(r.place)}</b><br>${esc(r.name||"")} ${esc(r.course||"")}</div>
+      <div class="h">${numBadge(r.hs1num, r.heads)}<span class="nm">${esc(r.hs1name||"")}</span>
+        <span class="pop">${esc(String(r.pop||"-"))}気</span></div>
+      <div class="vchip" style="background:${bg};color:${fg}">
+        <div class="v">${esc(String(r.value))}</div><div class="k">${esc(n.vlabel)}</div></div>
+    </div>`);
+  }
+  if (!n.races.length) h.push(`<p class="note">該当なし</p>`);
+  return h.join("");
+}
+function renderOddsMoves(d){
+  const col = (title, items, color) => `<div class="gcol"><h3>${title}</h3>` + items.map(m=>{
+    const w = Math.min(100, Math.abs(m.pct));
+    return `<div class="mv">
+      <div class="l1">${numBadge(m.num, m.heads, true)}<b>${esc(m.place)}</b><span>${esc(m.time||"-")}</span></div>
+      <div class="l2">${esc(String(m.o0))} → ${esc(String(m.o1))}倍（${m.pct>0?"+":""}${m.pct}%）</div>
+      <div class="bar"><i style="width:${w}%;background:${color}"></i></div>
+    </div>`;}).join("") + `</div>`;
+  return `<p class="meta">前日初値→最新の変化率上位（毎時更新・数値のみ）</p>
+    <div class="grid2">${col("オッズ低下", d.odds.down, "#1d6fd6")}
+    ${col("オッズ上昇", d.odds.up, "#f28c28")}</div>`;
+}
+function renderAlerts(d){
+  return `<p class="meta">HS7位以内 × 8番人気以下・調=調教評価（毎時更新）</p><div class="grid2">`
+    + d.alerts.map(x=>`<div class="al">
+      <div class="l1">${numBadge(x.num, x.heads, true)}<span class="nm">${esc(x.name)}</span></div>
+      <div class="l2"><span>${esc(x.time||"-")} ${esc(x.place)}</span>
+        <span>${x.pop}人気 ${esc(String(x.odds??"-"))}倍</span>
+        <span>HS${x.rank}位</span>${gq(x.qual)}</div>
+    </div>`).join("") + `</div>`;
+}
+function renderChokyo(d){
+  let h = [`<div class="card"><div class="cardh">A評価 ${d.chokyo.a.length}頭（前日確定）</div>`];
+  h.push(d.chokyo.a.map(x=>`<div class="qrow">
+      <div class="t"><b>${esc(x.time||"-")} ${esc(x.place)}</b></div>
+      <div class="h" style="flex:1;display:flex;align-items:center;gap:6px">
+        ${numBadge(x.num, x.heads, true)}<span style="font-weight:600">${esc(x.name)}</span>
+        <span class="tnote">${esc(x.tanpyo||"")}</span></div>
+    </div>`).join("") || `<p class="note">該当なし</p>`);
+  h.push(`</div>`);
+  h.push(`<div class="card"><div class="cardh">レース別の評価分布（A多→D多順）</div>
+    <p class="tnote">バー=出走頭数に対するA/B/C/Dの割合。Aが多くDも居る鞍=状態差が大きい。</p>`);
+  for (const q of d.chokyo.dist){
+    const n = q.heads || (q.A+q.B+q.C+q.D) || 1;
+    const seg = g => q[g] ? `<i style="width:${q[g]/n*100}%;background:${QCOL[g]}"></i>` : "";
+    h.push(`<div class="qrow"><div class="t"><b>${esc(q.time||"-")} ${esc(q.place)}</b></div>
+      <div class="qbar">${seg("A")}${seg("B")}${seg("C")}${seg("D")}</div>
+      <div class="c">A${q.A} B${q.B} C${q.C} D${q.D}</div></div>`);
+  }
+  h.push(`</div>`);
+  return h.join("");
+}
+function renderAgari(d){
+  return `<p class="meta">僅差時上がり（着差0.5以内で出した最速3F）の全場上位20頭</p><div class="card">`
+    + d.agari.map((x,i)=>`<div class="agrow"><span class="rk">${i+1}</span>
+      ${numBadge(x.num, x.heads, true)}<span class="nm">${esc(x.name)}</span>
+      <span class="sd">${esc(x.time||"-")} ${esc(x.place)}・${esc(x.style)}・${x.pop??"-"}人<br>
+      <span class="vv">${x.val.toFixed(1)}</span></span>
+    </div>`).join("") + `</div>`;
+}
+
 /* ---------- 汎用（予備） ---------- */
 function mdToHtml(md){
   const lines = md.split("\n");
@@ -422,16 +553,32 @@ async function fetchDoc(path){
   return {text: await r.text(), src:"github"};
 }
 function renderBody(){
-  if ($("doc").value === "HEATMAP") return renderHeatmap(lastText) ?? mdToHtml(lastText);
+  const doc = $("doc").value;
+  if (doc === "HEATMAP") return renderHeatmap(lastText) ?? mdToHtml(lastText);
+  if (doc === "TODAYV4"){
+    if (lastPath.endsWith(".json")){
+      try { return renderTodayJson(JSON.parse(lastText)); }
+      catch(e){ return `<p class="err">TODAY.jsonの解析に失敗: ${esc(e.message)}</p>`; }
+    }
+    return renderToday(lastText);   // mdフォールバック
+  }
   return lastPath.includes("P1_TODAY") ? (renderP1(lastText) ?? mdToHtml(lastText))
-       : lastPath.includes("TODAY")    ? renderToday(lastText)
        : mdToHtml(lastText);
 }
 async function show(){
-  const path = $("doc").value === "HEATMAP" ? "00_published/P1_TODAY.md" : $("doc").value;
+  const doc = $("doc").value;
+  let path = doc === "HEATMAP" ? "00_published/P1_TODAY.md"
+           : doc === "TODAYV4" ? "00_published/TODAY.json" : doc;
   $("view").innerHTML = "<p class=meta>読み込み中…</p>";
   try {
-    const {text, src} = await fetchDoc(path);
+    let got;
+    try { got = await fetchDoc(path); }
+    catch(e){
+      if (doc === "TODAYV4" && e.message !== "NOSETUP"){
+        path = "00_published/TODAY.md"; got = await fetchDoc(path);   // 旧md版フォールバック
+      } else throw e;
+    }
+    const {text, src} = got;
     lastText = text; lastPath = path;
     $("setup").hidden = true;
     $("view").innerHTML =
@@ -449,6 +596,7 @@ function bindSeg(){
       if (k==="ba") state.ba = v;
       else if (k==="tm") state.tm = v;
       else if (k==="tt") state.ttab = +v;
+      else if (k==="nt") state.ntab = +v;
       const meta = document.querySelector(".meta")?.outerHTML || "";
       $("view").innerHTML = meta + renderBody();
       bindSeg();
