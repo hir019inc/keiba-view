@@ -451,9 +451,9 @@ function renderNerai(d){
     h.push(`<div class="nrow">
       <div class="t"><b>${esc(r.time||"-")} ${esc(r.place)}</b><br>${esc(r.name||"")} ${esc(r.course||"")}</div>
       <div class="h">${numBadge(r.hs1num, r.heads)}<span class="nm">${esc(r.hs1name||"")}</span>
-        <span class="pop">${esc(String(r.pop||"-"))}気</span></div>
+        <span class="pop">${esc(String(r.pop||"-"))}人気</span></div>
       <div class="vchip" style="background:${bg};color:${fg}">
-        <div class="v">${esc(String(r.value))}</div><div class="k">${esc(n.vlabel)}</div></div>
+        <div class="v">${esc(String(r.value))}倍</div><div class="k">${esc(n.vlabel)}</div></div>
     </div>`);
   }
   if (!n.races.length) h.push(`<p class="note">該当なし</p>`);
@@ -520,7 +520,7 @@ function renderAgari(d){
   return `<p class="meta">僅差時上がり（着差0.5以内で出した最速3F）の全場上位20頭</p><div class="card">`
     + d.agari.map((x,i)=>`<div class="agrow"><span class="rk">${i+1}</span>
       ${numBadge(x.num, x.heads, true)}<span class="nm">${esc(x.name)}</span>
-      <span class="sd">${esc(x.time||"-")} ${esc(x.place)}・${esc(x.style)}・${x.pop??"-"}人<br>
+      <span class="sd">${esc(x.time||"-")} ${esc(x.place)} ${esc(x.course||"")}・${esc(x.style)}・${x.pop??"-"}人<br>
       <span class="vv">${x.val.toFixed(1)}</span> <span>記録:${esc(x.src||"-")}</span></span>
     </div>`).join("") + `</div>`;
 }
