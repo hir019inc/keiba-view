@@ -39,9 +39,6 @@ main{padding:10px;max-width:640px;margin:0 auto}
 .nm{flex:1;min-width:0;font-weight:700;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mt{font-size:11px;color:var(--sub);white-space:nowrap;font-variant-numeric:tabular-nums}
 .row.dim .nm{color:#b3b9c2}
-.row.cut{border-top:2px solid var(--accent);position:relative;margin-top:14px}
-.row.cut::before{content:attr(data-cut);position:absolute;top:-8px;left:0;background:var(--card);
-  color:var(--accent);font-size:9.5px;font-weight:800;padding:0 6px}
 .up{color:#0a7a3d;font-weight:800}.dn{color:#b8232f;font-weight:800}
 input[type=number]{width:110px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;font-size:14px}
 /* --- 下部固定バー --- */
@@ -55,6 +52,8 @@ input[type=number]{width:110px;padding:6px 9px;border:1px solid var(--line);bord
 .st .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
 .keep{flex:0 0 auto;padding:10px 14px;border:0;border-radius:9px;background:var(--accent);color:#fff;
       font-size:13px;font-weight:700}
+.copyall{width:100%;margin-top:8px;padding:9px;border-radius:9px;background:#fff;color:var(--accent);
+         border:1px solid var(--accent);font-size:13px;font-weight:700}
 .warn{color:#b8232f}
 table.k{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
 table.k td{padding:3px 4px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
@@ -62,12 +61,19 @@ table.k td:last-child{text-align:right}
 .mock{background:#fffbe6;border:1px solid #f0d98c;color:#6b5410;font-size:11px;border-radius:8px;
       padding:7px 9px;margin:0 0 10px;line-height:1.6}
 summary{font-size:11.5px;color:var(--sub)}
-.back{display:inline-block;color:var(--accent);font-size:13px;font-weight:700;text-decoration:none;margin:0 0 8px}
+.del{display:inline-flex;align-items:center;justify-content:center;width:30px;height:26px;
+     border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--sub);padding:0}
+.del:active{background:#fdecea;color:#b8232f;border-color:#f0b6b6}
+.back{color:var(--accent);font-size:13px;font-weight:700;text-decoration:none;flex:0 0 auto;
+      padding:2px 8px 2px 0;border-right:1px solid var(--line)}
+.rc{font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc b{color:var(--fg);font-size:13.5px}
 </style></head><body>
-<header><div class="hrow"><span class="silks" id="silks"></span><h1>D.E.R.B.Y.</h1>
-  <span class="ver">Ver 4.00</span></div></header>
+<header>
+  <div class="hrow"><a class="back" href="./">‹ P1選定</a>
+    <span class="rc"><b>15:35 中京7</b> 名古屋城S ダ1800・16頭</span></div>
+</header>
 <main>
-<a class="back" href="./">‹ P1選定へ戻る</a>
 <div class="mock" id="mockmsg">動線サンプル。馬・オッズ・脚質・上がり・調教は実データ（2026-08-23 中京7R）。
 <b>3連複の配当だけ近似値</b>で、最高側は過大に伸びます。本番は実オッズ行列。</div>
 <div id="app"></div>
@@ -80,12 +86,14 @@ const WAKU=[null,["#ffffff","#333","#9aa1ab"],["#222222","#fff","#222"],["#e6394
  ["#1d6fd6","#fff","#1d6fd6"],["#f6d32d","#333","#e3bd0e"],["#2e9e4f","#fff","#2e9e4f"],
  ["#f28c28","#fff","#f28c28"],["#f4a7c3","#333","#eb8fb2"]];
 const HEADS=16, R="中京7R";
+const TRASH='<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">'+
+ '<path fill="currentColor" d="M6 2h4l.6 1H14v1.6H2V3h3.4L6 2zM3.4 5.6h9.2l-.7 8.2a1 1 0 0 1-1 .9H5.1a1 1 0 0 1-1-.9L3.4 5.6zm2.4 1.5.3 6h1.1l-.3-6H5.8zm3.3 0-.3 6h1.1l.3-6H9.1z"/></svg>';
 const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
 function waku(n){const b=Math.floor(HEADS/8),r=HEADS%8;let c=0;
   for(let f=1;f<=8;f++){c+=b+(f>8-r?1:0);if(n<=c)return f;}return 8;}
 function badge(n){const[bg,fg,bd]=WAKU[waku(n)];
   return `<span class="num" style="background:${bg};color:${fg};border-color:${bd}">${n}</span>`;}
-document.getElementById("silks").innerHTML=WAKU.slice(1).map(w=>`<i style="background:${w[0]}"></i>`).join("");
+
 
 const P={};{let s=0;H.forEach(h=>{P[h.num]=0.8/h.odds;s+=P[h.num];});H.forEach(h=>P[h.num]/=s);}
 function trioOdds(a,b,c){const v=[a,b,c].map(n=>P[n]);let t=0;
@@ -137,9 +145,7 @@ function render(){
   const useN = need();
   document.getElementById("app").innerHTML = `
   <div class="card">
-    <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
-      <b style="font-size:14px">15:35 中京7</b><span class="mini">名古屋城ステークス ダ1800・16頭</span></div>
-    <div class="mini" style="margin-top:3px">逃0 先4 差4 追8（機械参考:ミドル寄り）</div>
+    <div class="mini">逃0 先4 差4 追8（機械参考:ミドル寄り）</div>
     <div class="pays">
       <div class="pay" style="background:#eef1f6;color:#5a6472">16<span>最低</span></div>
       <div class="pay" style="background:#ffdca8;color:#7a4a00">160<span>低</span></div>
@@ -170,30 +176,24 @@ function render(){
   <div class="card">
     <div class="hd">馬を選ぶ　<span style="color:var(--sub);font-weight:600">
       ${K.ax===1?"1番目が軸":K.ax===2?"1・2番目が軸":"選んだ順は優先度"}・${useN}頭使用</span>
-      <span style="float:right;display:flex;gap:5px">
-      <button class="mini" style="border:1px solid var(--line);border-radius:6px;background:#fff;padding:2px 8px"
-        onclick="rankAll();render()">全頭に順位</button>
-      <button class="mini" style="border:1px solid var(--line);border-radius:6px;background:#fff;padding:2px 8px"
-        onclick="reset();render()">並べ直す</button></span></div>
+      <button class="mini" style="float:right;border:1px solid var(--line);border-radius:6px;background:#fff;padding:3px 9px"
+        onclick="reset();render()">デフォルトに戻す</button></div>
     ${ord.map(h=>{
       const i=S.sel.indexOf(h.num), on=i>=0, used=on&&i<useN;
       const cls = !on?"":(K.ax&&i<K.ax?"ax":used?"on":"out");
       const mv = h.moved>0?'<span class="up">▲</span>':h.moved<0?'<span class="dn">▼</span>':"";
-      const cut = (on&&i===useN) ? ` cut" data-cut="ここから下は買い目に入らない` : "";
-      return `<div class="row ${on?"":"dim"}${cut}" onclick="tap(${h.num})">
+      return `<div class="row ${on?"":"dim"}" onclick="tap(${h.num})">
         <span class="sel ${cls}">${on?i+1:""}</span>${badge(h.num)}
         <span class="nm">${esc(h.name)}</span>
         <span class="mt">${h.pop}人 ${h.odds} ${h.kyaku} HS${h.hsr}${mv}</span></div>`;}).join("")}
     <div class="note">タップで選択／解除。上から機械の並び（HSに展開の補正を当てたもの・▲▼＝HS順から動いた馬）。</div>
   </div>
 
-  ${S.log.length?`<div class="card"><div class="hd">控え ${S.log.length}件（端末内）</div>
+  ${S.log.length?`<div class="card"><div class="hd">買った記録 ${S.log.length}件（この端末に保存）</div>
     <table class="k">${S.log.map((r,i)=>`<tr><td>${esc(r)}</td>
-      <td><button class="mini" style="border:1px solid var(--line);border-radius:6px;background:#fff;padding:2px 7px"
-        onclick="drop(${i})">消す</button></td></tr>`).join("")}</table>
-    <button class="keep" style="width:100%;margin-top:8px;background:#fff;color:var(--accent);border:1px solid var(--accent)"
-      onclick="copyAll()">まとめてコピー</button>
-    <div class="note">鞍をまたいで積み上がります（どの鞍を開いても同じ控えが見える）。Macの振り返りへ貼り付け・判定はMac側。</div></div>`:""}
+      <td><button class="del" onclick="drop(${i})" aria-label="削除">${TRASH}</button></td></tr>`).join("")}</table>
+    <button class="copyall" onclick="copyAll()">まとめてコピー</button>
+    <div class="note">鞍をまたいで貯まります（どの鞍を開いても同じ記録が見える）。Macの振り返りへ貼り付け・判定はMac側。</div></div>`:""}
 
   ${out.length?`<div class="card"><details><summary>買い目 ${out.length}点を見る（オッズ幅 ${
       (()=>{const o=out.map(c=>trioOdds(...c)).sort((a,b)=>a-b);
@@ -217,14 +217,13 @@ function render(){
 }
 function setT(k){S.tenkai=k;reset();render();}
 function setK(k){S.kata=k;topup();render();}
-function rankAll(){ for(const h of auto()) if(!S.sel.includes(h.num)) S.sel.push(h.num); }
 function tap(n){const i=S.sel.indexOf(n); if(i>=0)S.sel.splice(i,1); else S.sel.push(n); render();}
 function keep(){const {out,K}=combos(); if(!out.length)return;
   const n=out.length, unit=Math.max(100,Math.floor(S.yosan/n/100)*100);
   S.log.push(`${R} 3連複 ${K.l} ${S.sel.slice(0,K.ax===2?2:K.n).join("-")} ${n}点×${unit}円 展開=${TENKAI.find(t=>t[0]===S.tenkai)[1]}`);
   save();render();}
 function drop(i){S.log.splice(i,1);save();render();}
-function copyAll(){const t="2026-08-23 買った控え\n"+S.log.map(x=>"- "+x).join("\n");
+function copyAll(){const t="2026-08-23 買った記録\n"+S.log.map(x=>"- "+x).join("\n");
   navigator.clipboard?.writeText(t).then(()=>alert("コピーしました\n\n"+t),()=>alert(t));}
 render();
 /* P1のどの鞍から来たか。サンプルは中京7Rの材料しか持たないので、違う鞍なら明示する */
