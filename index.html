@@ -90,7 +90,7 @@
   .mx { width:100%; border-collapse:separate; border-spacing:3px; table-layout:fixed; }
   .mx th { font-size:10.5px; color:var(--sub); font-weight:600; padding:2px 0; border:0;
            text-align:center; line-height:1.3; background:transparent; }
-  .mx th:first-child { width:15%; }
+  .mx th:first-child { width:19%; }
   .mx td.cell { background:var(--card); border:1px solid var(--line); border-radius:8px;
                 vertical-align:top; padding:4px; }
   .mx .chips { display:flex; flex-wrap:wrap; gap:3px; min-height:24px; }
@@ -237,7 +237,7 @@ function renderP1(md){
 const POPB = [["1-2","1-2人気"],["3","3人気"],["4-6","4-6人気"],["7-","7人気-"]];
 function popBand(p){ const n=parseInt(p); if(!n) return null;
   return n<=2?"1-2": n===3?"3": n<=6?"4-6":"7-"; }
-const GAPB = [["hi","gap6+"],["mid","gap2-6"],["lo","gap<2"]];
+const GAPB = [["lo","gap<2"],["mid","gap2-6"],["hi","gap6+"]];
 function gapBand(hs){ const m=String(hs).match(/\(([\d.]+)\)/); const g=m?parseFloat(m[1]):NaN;
   return isNaN(g)?null: g>=6?"hi": g>=2?"mid":"lo"; }
 function renderHeatmap(md){
@@ -253,11 +253,12 @@ function renderHeatmap(md){
     shown++;
     (grid[gb+"|"+pb] ??= []).push(r);
   }
+  // 行=人気帯 / 列=gap帯(左→右で増加) 2026-08-26レビューで縦横入替
   h.push(`<table class="mx"><thead><tr><th></th>` +
-    POPB.map(([k,l])=>`<th>${esc(l)}</th>`).join("") + `</tr></thead><tbody>`);
-  for (const [gk, gl] of GAPB){
-    h.push(`<tr><td class="glbl">${esc(gl)}</td>`);
-    for (const [pk] of POPB){
+    GAPB.map(([k,l])=>`<th>${esc(l)}</th>`).join("") + `</tr></thead><tbody>`);
+  for (const [pk, pl] of POPB){
+    h.push(`<tr><td class="glbl">${esc(pl)}</td>`);
+    for (const [gk] of GAPB){
       const rs = grid[gk+"|"+pk] || [];
       h.push(`<td class="cell"><div class="chips">` + rs.map(r=>{
         const mid = r.pay[2] ?? r.pay[1];
@@ -269,8 +270,8 @@ function renderHeatmap(md){
   }
   h.push("</tbody></table>");
   if (!shown) h.push(`<p class="note">該当するレースがありません</p>`);
-  h.push(`<footer>縦=HS1位とHS2位の差（gap）／横=HS1位が何番人気か。
-    右の列ほどモデルと市場が割れている鞍・上の行ほどモデル内で抜けている鞍。
+  h.push(`<footer>縦=HS1位が何番人気か／横=HS1位とHS2位の差（gap・右ほど抜けている）。
+    下の行ほどモデルと市場が割れている鞍・右の列ほどモデル内で抜けている鞍。
     チップ=鞍（場の頭文字+R番号・例 新2=新潟2R）。チップの色=配当・中
     （HS上位7頭BOX35組の中間グループ中央値。〜10/〜50/〜150/〜500/〜2000/2000超の6段階）。
     個別の値はP1選定カードで。</footer>`);
