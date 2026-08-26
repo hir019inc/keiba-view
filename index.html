@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>競馬予想ビュー</title>
+<style>
+  :root { --bg:#fafafa; --fg:#1a1a1a; --line:#ddd; --accent:#1c4587; --sub:#666; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#111; --fg:#eee; --line:#333; --accent:#7aa7e8; --sub:#999; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font-family:-apple-system,"Hiragino Sans",sans-serif; font-size:14px; }
+  header { position:sticky; top:0; background:var(--bg); border-bottom:1px solid var(--line);
+           padding:8px 10px; display:flex; gap:8px; align-items:center; z-index:9; }
+  header h1 { font-size:15px; margin:0; flex:1; }
+  header button, header select {
+    font-size:13px; padding:5px 9px; border:1px solid var(--line); border-radius:6px;
+    background:var(--bg); color:var(--fg); }
+  main { padding:10px; }
+  .meta { color:var(--sub); font-size:12px; margin:4px 0 10px; }
+  .tablewrap { overflow-x:auto; -webkit-overflow-scrolling:touch; margin:8px 0 16px;
+               border:1px solid var(--line); border-radius:6px; }
+  table { border-collapse:collapse; white-space:nowrap; font-size:12.5px; width:max-content; }
+  th, td { padding:4px 7px; border-bottom:1px solid var(--line); text-align:left; }
+  thead th { position:sticky; top:0; background:var(--bg); color:var(--accent);
+             border-bottom:2px solid var(--accent); }
+  tbody tr:nth-child(even) { background:rgba(127,127,127,.07); }
+  h2 { font-size:14px; margin:14px 0 4px; color:var(--accent); }
+  p  { margin:6px 0; line-height:1.6; overflow-wrap:anywhere; }
+  #setup { max-width:520px; margin:30px auto; padding:0 14px; }
+  #setup input { width:100%; font-size:14px; padding:8px; margin:6px 0;
+                 border:1px solid var(--line); border-radius:6px;
+                 background:var(--bg); color:var(--fg); }
+  #setup button { font-size:14px; padding:8px 16px; border-radius:6px;
+                  border:1px solid var(--accent); background:var(--accent); color:#fff; }
+  .err { color:#c0392b; }
+  .note { color:var(--sub); font-size:12px; line-height:1.7; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">競馬予想ビュー</h1>
+  <select id="doc">
+    <option value="00_published/P1_TODAY.md">P1選定</option>
+    <option value="00_published/TODAY.md">TODAY(V3)</option>
+    <option value="00_published/P1_PHONE.md">P1(文字版)</option>
+  </select>
+  <button id="reload" title="再読込">更新</button>
+</header>
+<main>
+  <div id="setup" hidden>
+    <h2>初回設定（この端末に保存されます）</h2>
+    <p class="note">GitHubの読み取り専用トークンを貼り付けてください。<br>
+      作り方: GitHub → Settings → Developer settings → Fine-grained tokens →
+      対象リポジトリを keiba-yosou のみ・権限は Contents: Read-only で発行。<br>
+      トークンはこの端末のブラウザ内にだけ保存され、外部には送られません
+      （通信先はGitHub APIのみ）。</p>
+    <input id="repo" placeholder="owner/repo（例 hir019inc/keiba-yosou）">
+    <input id="token" placeholder="github_pat_..." type="password">
+    <button id="save">保存して表示</button>
+    <p id="setuperr" class="err"></p>
+  </div>
+  <div id="view"></div>
+</main>
+<script>
+"use strict";
+const LS = { repo:"kv_repo", token:"kv_token" };
+const $ = id => document.getElementById(id);
+
+function mdToHtml(md){
+  // このプロジェクトのMarkdown（見出し■/表/段落/<br>）専用の最小レンダラ
+  const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const lines = md.split("\n");
+  let html = [], tbl = null;
+  const flush = () => { if (tbl){ html.push(renderTable(tbl)); tbl = null; } };
+  for (const raw of lines){
+    const line = raw.replace(/<br>/g,"").trimEnd();
+    if (line.startsWith("|")){ (tbl ??= []).push(line); continue; }
+    flush();
+    if (!line.trim()) continue;
+    if (line.startsWith("#")) html.push(`<h2>${esc(line.replace(/^#+\s*/,""))}</h2>`);
+    else if (line.startsWith("■")) html.push(`<h2>${esc(line)}</h2>`);
+    else html.push(`<p>${esc(line)}</p>`);
+  }
+  flush();
+  return html.join("\n");
+}
+function renderTable(rows){
+  const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const cells = r => r.replace(/^\||\|$/g,"").split("|").map(c=>c.trim());
+  let h = ["<div class=tablewrap><table>"];
+  rows.forEach((r,i)=>{
+    if (/^\|[\s:|-]+\|$/.test(r)) return;           // 区切り行
+    const tag = i===0 ? "th" : "td";
+    if (i===0) h.push("<thead>");
+    if (i===2) h.push("<tbody>");
+    h.push("<tr>"+cells(r).map(c=>`<${tag}>${esc(c)}</${tag}>`).join("")+"</tr>");
+    if (i===0) h.push("</thead>");
+  });
+  h.push("</tbody></table></div>");
+  return h.join("");
+}
+
+async function fetchDoc(path){
+  // ローカル開発（リポジトリ直下でhttp.server起動）なら同一オリジンで読む
+  try {
+    const r = await fetch("../"+path, {cache:"no-store"});
+    if (r.ok) return {text: await r.text(), src:"local"};
+  } catch(e){ /* 本番はここに来る */ }
+  const repo = localStorage.getItem(LS.repo), token = localStorage.getItem(LS.token);
+  if (!repo || !token) throw new Error("NOSETUP");
+  const r = await fetch(`https://api.github.com/repos/${repo}/contents/${encodeURI(path)}`,
+    { headers: { "Accept":"application/vnd.github.raw+json",
+                 "Authorization":`Bearer ${token}`,
+                 "X-GitHub-Api-Version":"2022-11-28" }, cache:"no-store" });
+  if (r.status===401 || r.status===403) throw new Error("トークンが無効か権限不足です");
+  if (r.status===404) throw new Error("ファイルがまだありません: "+path);
+  if (!r.ok) throw new Error("取得失敗 HTTP "+r.status);
+  return {text: await r.text(), src:"github"};
+}
+
+async function show(){
+  const path = $("doc").value;
+  $("view").innerHTML = "<p class=meta>読み込み中…</p>";
+  try {
+    const {text, src} = await fetchDoc(path);
+    $("setup").hidden = true;
+    $("view").innerHTML =
+      `<div class=meta>${path}（${src==="local"?"ローカル":"GitHub"}・${new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})} 取得）</div>`
+      + mdToHtml(text);
+  } catch(e){
+    if (e.message==="NOSETUP"){ $("setup").hidden=false; $("view").innerHTML=""; }
+    else $("view").innerHTML = `<p class=err>${e.message}</p>`;
+  }
+}
+$("save").onclick = () => {
+  const repo=$("repo").value.trim(), token=$("token").value.trim();
+  if(!/^[\w.-]+\/[\w.-]+$/.test(repo)){ $("setuperr").textContent="owner/repo の形式で入力してください"; return; }
+  if(!token){ $("setuperr").textContent="トークンを入力してください"; return; }
+  try { localStorage.setItem(LS.repo, repo); localStorage.setItem(LS.token, token); }
+  catch(e){ $("setuperr").textContent="この環境では保存できません(プライベートブラウズ?)"; return; }
+  show();
+};
+$("reload").onclick = show;
+$("doc").onchange = show;
+try { if (localStorage.getItem(LS.repo)) $("repo").value = localStorage.getItem(LS.repo); } catch(e){}
+show();
+</script>
+</body>
+</html>
