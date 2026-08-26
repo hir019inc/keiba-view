@@ -5,12 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>競馬予想ビュー</title>
 <style>
+  /* 白バック固定（2026-08-26ユーザー指定・ダークモード廃止） */
   :root { --bg:#f5f6f8; --card:#fff; --fg:#1a1a1a; --line:#e2e5ea; --accent:#1c4587;
           --sub:#68707c; --chip:#eef1f6; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#101216; --card:#1a1e25; --fg:#e8eaee; --line:#2a2f38; --accent:#7aa7e8;
-            --sub:#8b95a3; --chip:#242a34; }
-  }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--fg);
          font-family:-apple-system,"Hiragino Sans",sans-serif; font-size:14px; }
@@ -22,18 +19,21 @@
     background:var(--card); color:var(--fg); }
   main { padding:10px; max-width:640px; margin:0 auto; }
   .meta { color:var(--sub); font-size:12px; margin:4px 2px 10px; }
-  .seg { display:flex; gap:6px; margin:2px 0 12px; }
-  .seg button { flex:1; font-size:13px; padding:7px 0; border:1px solid var(--line);
-                border-radius:8px; background:var(--card); color:var(--fg); }
+  .seg { display:flex; gap:5px; margin:0 0 8px; overflow-x:auto; }
+  .seg button { flex:1 0 auto; font-size:12.5px; padding:7px 10px; border:1px solid var(--line);
+                border-radius:8px; background:var(--card); color:var(--fg); white-space:nowrap; }
   .seg button.on { background:var(--accent); border-color:var(--accent); color:#fff; }
   .card { background:var(--card); border:1px solid var(--line); border-radius:12px;
           padding:10px 12px; margin:0 0 10px; }
-  .c1 { display:flex; align-items:baseline; gap:8px; color:var(--sub); font-size:12px; }
+  .cardh { font-weight:700; font-size:14.5px; color:var(--accent); margin-bottom:6px; }
+  .c1 { display:flex; align-items:baseline; gap:8px; color:var(--sub); font-size:12px;
+        flex-wrap:wrap; }
   .c1 .t { color:var(--fg); font-weight:600; font-size:13px; }
   .c2 { display:flex; align-items:center; gap:8px; margin:6px 0 2px; flex-wrap:wrap; }
   .num { display:inline-flex; align-items:center; justify-content:center; min-width:26px;
-         height:26px; border-radius:6px; background:var(--accent); color:#fff;
-         font-weight:700; font-size:14px; padding:0 4px; }
+         height:26px; border-radius:6px; font-weight:700; font-size:14px; padding:0 4px;
+         border:1px solid transparent; }
+  .num.s { min-width:22px; height:22px; font-size:12.5px; }
   .name { font-size:17px; font-weight:700; }
   .pop { font-size:12px; color:var(--sub); border:1px solid var(--line);
          border-radius:99px; padding:1px 8px; }
@@ -41,18 +41,34 @@
         flex-wrap:wrap; }
   .c3 b { color:var(--fg); font-weight:600; }
   .pays { display:flex; gap:6px; }
-  .pay { flex:1; background:var(--chip); border-radius:8px; text-align:center;
-         padding:5px 2px; }
+  .pay { flex:1; background:var(--chip); border-radius:8px; text-align:center; padding:5px 2px; }
   .pay .v { font-weight:700; font-size:14px; }
   .pay .k { font-size:10.5px; color:var(--sub); }
+  /* TODAYレース別カード */
+  .axis { display:flex; align-items:center; gap:8px; margin:8px 0 4px; flex-wrap:wrap; }
+  .axis .tag { font-size:11px; font-weight:700; color:#fff; background:var(--accent);
+               border-radius:4px; padding:2px 6px; }
+  .aname { font-size:16px; font-weight:700; }
+  .hsv { color:var(--sub); font-size:12.5px; }
+  .mates { margin:6px 0 0; }
+  .mate { display:flex; align-items:center; gap:7px; padding:5px 0;
+          border-top:1px solid var(--line); font-size:13px; }
+  .mate .rk { color:var(--sub); font-size:11.5px; width:16px; text-align:right; }
+  .mate .mn { font-weight:600; }
+  .mate .myo { font-size:10.5px; font-weight:700; color:var(--accent);
+               border:1px solid var(--accent); border-radius:4px; padding:0 4px; }
+  .mate .sd { color:var(--sub); font-size:11.5px; margin-left:auto; text-align:right; }
+  .tnote { color:var(--sub); font-size:11.5px; line-height:1.6; }
+  .tsub { font-weight:700; margin:10px 0 2px; }
+  .tlist { margin:6px 0; padding-left:0; list-style:none; }
+  .tlist li { padding:7px 0; border-top:1px solid var(--line); line-height:1.55; }
   h2 { font-size:14px; margin:16px 2px 8px; color:var(--accent); }
   p  { margin:6px 0; line-height:1.6; overflow-wrap:anywhere; }
   .tablewrap { overflow-x:auto; -webkit-overflow-scrolling:touch; margin:8px 0 16px;
                border:1px solid var(--line); border-radius:6px; background:var(--card); }
   table { border-collapse:collapse; white-space:nowrap; font-size:12.5px; width:max-content; }
   th, td { padding:4px 7px; border-bottom:1px solid var(--line); text-align:left; }
-  thead th { position:sticky; top:0; background:var(--card); color:var(--accent);
-             border-bottom:2px solid var(--accent); }
+  thead th { background:var(--card); color:var(--accent); border-bottom:2px solid var(--accent); }
   #setup { max-width:520px; margin:30px auto; padding:0 14px; }
   #setup input { width:100%; font-size:14px; padding:8px; margin:6px 0;
                  border:1px solid var(--line); border-radius:6px;
@@ -62,12 +78,6 @@
   .err { color:#c0392b; }
   .note { color:var(--sub); font-size:12px; line-height:1.7; }
   footer { color:var(--sub); font-size:11.5px; line-height:1.7; margin:18px 2px; }
-  .cardh { font-weight:700; font-size:14.5px; color:var(--accent); margin-bottom:6px; }
-  .tlist { margin:6px 0; padding-left:0; list-style:none; }
-  .tlist li { padding:7px 0; border-top:1px solid var(--line); line-height:1.55; }
-  .tnote { color:var(--sub); font-size:11.5px; line-height:1.6; }
-  .tsub { font-weight:700; margin:10px 0 2px; }
-  .card p { line-height:1.6; margin:4px 0; }
 </style>
 </head>
 <body>
@@ -99,40 +109,73 @@
 const LS = { repo:"kv_repo", token:"kv_token" };
 const $ = id => document.getElementById(id);
 const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-let segState = "all";
+const inline = t => t.split("<br>").map(x=>esc(x)).join("<br>")
+                     .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+let state = { ba:"all", tm:"all", ttab:0 };
+let lastText = "", lastPath = "";
 
-/* ---------- P1: 表を解析して1レース=1カードで描画 ---------- */
+/* ---------- 枠色（JRA 8枠・馬番+頭数から枠を計算） ---------- */
+const WAKU = [null,
+  ["#ffffff","#333","#9aa1ab"], ["#222222","#fff","#222"], ["#e63946","#fff","#e63946"],
+  ["#1d6fd6","#fff","#1d6fd6"], ["#f6d32d","#333","#e3bd0e"], ["#2e9e4f","#fff","#2e9e4f"],
+  ["#f28c28","#fff","#f28c28"], ["#f4a7c3","#333","#eb8fb2"]];
+function waku(num, heads){
+  num = +num; heads = +heads;
+  if (!num || !heads) return 0;
+  if (heads <= 8) return num;
+  const base = Math.floor(heads/8), rem = heads % 8;
+  let cum = 0;
+  for (let f = 1; f <= 8; f++){
+    cum += base + (f > 8 - rem ? 1 : 0);
+    if (num <= cum) return f;
+  }
+  return 8;
+}
+function numBadge(num, heads, small){
+  const w = waku(num, heads);
+  const [bg, fg, bd] = WAKU[w] || ["var(--accent)","#fff","transparent"];
+  return `<span class="num${small?" s":""}" style="background:${bg};color:${fg};border-color:${bd}">${esc(String(num))}</span>`;
+}
+
+/* ---------- P1: カード描画（場×時間帯フィルタ） ---------- */
 function parseP1(md){
-  const races = [];
-  let section = "";
-  let note = "";
+  const races = []; let note = "";
   for (const raw of md.split("\n")){
     const line = raw.trim();
-    if (line.startsWith("■")) { section = line.includes("午後") ? "pm" : "am"; continue; }
     if (line.startsWith("※")) { note += line + " "; continue; }
     if (!line.startsWith("|") || line.includes("発走 |") || /^\|[\s:|-]+\|$/.test(line)) continue;
     const c = line.replace(/^\||\|$/g,"").split("|").map(x=>x.trim());
     if (c.length < 9) continue;
     const m = c[4].match(/^(\d+)番(.+?)\((.+?)\)$/) || [];
-    races.push({ section, time:c[0], place:c[1], course:c[2], heads:c[3],
+    const ba = (c[1].match(/^\D+/)||[""])[0];
+    const hour = parseInt(c[0].split(":")[0] || "0");
+    races.push({ time:c[0], hour, place:c[1], ba, course:c[2], heads:c[3],
                  num:m[1]||"?", name:m[2]||c[4], pop:m[3]||"-",
                  jockey:c[5], odds:c[6], hs:c[7], pay:c[8].split("/") });
   }
   return { races, note };
 }
+const TM = [["all","全て"],["a","～11時"],["b","11-14"],["c","14-16"],["d","16時～"]];
+const tmOf = h => h<11 ? "a" : h<14 ? "b" : h<16 ? "c" : "d";
 function renderP1(md){
   const {races, note} = parseP1(md);
   if (!races.length) return null;
-  const segs = [["all","全て"],["am","午前"],["pm","午後"]];
-  let h = [`<div class="seg">` + segs.map(([k,l]) =>
-    `<button data-seg="${k}" class="${segState===k?"on":""}">${l}</button>`).join("") + `</div>`];
+  const bas = ["all", ...new Set(races.map(r=>r.ba))];
+  let h = [];
+  h.push(`<div class="seg">` + bas.map(b =>
+    `<button data-f="ba:${b}" class="${state.ba===b?"on":""}">${b==="all"?"全場":esc(b)}</button>`).join("") + `</div>`);
+  h.push(`<div class="seg">` + TM.map(([k,l]) =>
+    `<button data-f="tm:${k}" class="${state.tm===k?"on":""}">${l}</button>`).join("") + `</div>`);
   const payKeys = ["最低","低","中","高"];
+  let shown = 0;
   for (const r of races){
-    if (segState!=="all" && r.section!==segState) continue;
+    if (state.ba!=="all" && r.ba!==state.ba) continue;
+    if (state.tm!=="all" && tmOf(r.hour)!==state.tm) continue;
+    shown++;
     h.push(`<div class="card">
       <div class="c1"><span class="t">${esc(r.time)} ${esc(r.place)}</span>
         <span>${esc(r.course)} ・ ${esc(r.heads)}頭</span></div>
-      <div class="c2"><span class="num">${esc(r.num)}</span>
+      <div class="c2">${numBadge(r.num, r.heads)}
         <span class="name">${esc(r.name)}</span>
         <span class="pop">${esc(r.pop)}気</span></div>
       <div class="c3"><span>騎手 <b>${esc(r.jockey)}</b></span>
@@ -142,51 +185,107 @@ function renderP1(md){
         `<div class="pay"><div class="v">${esc(v)}</div><div class="k">${payKeys[i]||""}</div></div>`).join("")}</div>
     </div>`);
   }
+  if (!shown) h.push(`<p class="note">該当するレースがありません</p>`);
   h.push(`<footer>${esc(note)}<br>
     HS1位=参考スコア1位（軸ではない・軸はP2で決める）。オッズ=前日初値→最新。
     HS=値(2位との差)。配当=HS上位7頭BOX35組の3連複オッズ：最低=最も人気側の組（床）／
-    低・中・高=安い順3等分の各グループ中央値（この7頭内の相対区分）。取得時点の値。</footer>`);
+    低・中・高=安い順3等分の各グループ中央値（この7頭内の相対区分）。取得時点の値。
+    馬番の色=枠色（馬番と頭数から算出）。</footer>`);
   return h.join("");
 }
 
-/* ---------- TODAY: ##セクション=1カードで描画 ---------- */
-function inline(t){
-  // <br>を活かしつつエスケープし、**太字**を反映
-  return t.split("<br>").map(x=>esc(x)).join("<br>")
-          .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
-}
-function renderToday(md){
-  const out = [];
-  let card = null, list = null;
-  const closeList = ()=>{ if(list){ card.push("</ul>"); list=null; } };
-  const closeCard = ()=>{ if(card){ closeList(); card.push("</div>"); out.push(card.join("")); card=null; } };
+/* ---------- TODAY: セクションをタブ化・レース別は専用カード ---------- */
+function splitSections(md){
+  const secs = []; let cur = null; let intro = [];
   for (const raw of md.split("\n")){
-    const line = raw.trim();
-    if (!line || line === "---") { closeList(); continue; }
-    if (line.startsWith("# ") && !line.startsWith("## ")){
-      out.push(`<h2>${inline(line.slice(2))}</h2>`); continue;
-    }
+    const line = raw.trimEnd();
     if (line.startsWith("## ")){
-      closeCard();
-      card = [`<div class="card"><div class="cardh">${inline(line.slice(3))}</div>`];
-      continue;
+      cur = { title: line.slice(3).trim(), lines: [] };
+      secs.push(cur); continue;
     }
-    if (!card){ out.push(`<p class="note">${inline(line)}</p>`); continue; }
+    if (line.startsWith("# ")) continue;
+    (cur ? cur.lines : intro).push(line);
+  }
+  return { intro, secs };
+}
+function renderTodayGeneric(lines){
+  let out = [`<div class="card">`], list = null;
+  const closeList = ()=>{ if(list){ out.push("</ul>"); list=null; } };
+  for (const raw of lines){
+    const line = raw.trim();
+    if (!line || line==="---"){ closeList(); continue; }
     if (line.startsWith("- ")){
-      if (!list){ card.push('<ul class="tlist">'); list=true; }
-      card.push(`<li>${inline(line.slice(2))}</li>`); continue;
+      if (!list){ out.push('<ul class="tlist">'); list=true; }
+      out.push(`<li>${inline(line.slice(2))}</li>`); continue;
     }
     closeList();
-    if (line.startsWith("※")) card.push(`<p class="tnote">${inline(line)}</p>`);
-    else if (line.startsWith("**") && line.endsWith("**"))
-      card.push(`<p class="tsub">${inline(line)}</p>`);
-    else card.push(`<p>${inline(line)}</p>`);
+    if (line.startsWith("※")) out.push(`<p class="tnote">${inline(line)}</p>`);
+    else if (line.startsWith("**") && line.endsWith("**")) out.push(`<p class="tsub">${inline(line)}</p>`);
+    else out.push(`<p>${inline(line)}</p>`);
   }
-  closeCard();
-  return out.join("\n");
+  closeList(); out.push("</div>");
+  return out.join("");
+}
+function renderTodayRaces(lines){
+  // <details>ブロック=1レース。summary + 中身をカード化。解析不能な行はそのまま小さく出す。
+  const blocks = []; let cur = null;
+  for (const raw of lines){
+    const line = raw.trim();
+    if (line.startsWith("<details")){ cur = {summary:"", body:[]}; continue; }
+    if (line.startsWith("</details")){ if(cur) blocks.push(cur); cur=null; continue; }
+    if (!cur) continue;
+    const sm = line.match(/<summary>(.*)<\/summary>/);
+    if (sm){ cur.summary = sm[1]; continue; }
+    if (line) cur.body.push(line);
+  }
+  if (!blocks.length) return renderTodayGeneric(lines);
+  const out = [];
+  for (const b of blocks){
+    const s = b.summary.match(/^([\d:]+)\s*(［.］)?\s*(\S+?R)\s/) || [];
+    const heads = (b.body.join(" ").match(/(\d+)頭/)||[])[1];
+    let head = `<div class="c1"><span class="t">${esc(s[1]||"")} ${esc(s[3]||b.summary)}</span>`
+             + (s[2]?`<span>${esc(s[2])}</span>`:"") + `</div>`;
+    let axis = "", metas = [], mates = [], extras = [];
+    for (const line of b.body){
+      let m;
+      if ((m = line.match(/^\*\*［軸］(\d+)番(.+?)\*\*\s+HS([\d.]+)(?:<br>(.*))?$/))){
+        axis = `<div class="axis"><span class="tag">軸</span>${numBadge(m[1],heads)}
+          <span class="aname">${esc(m[2])}</span><span class="hsv">HS${esc(m[3])}</span></div>`
+          + (m[4]?`<p class="tnote">${inline(m[4])}</p>`:"");
+      } else if ((m = line.match(/^(\d+)\.\s+\*\*(【妙】)?(\d+)番(.+?)\*\*\s+HS([\d.]+)(?:<br>(.*))?$/))){
+        mates.push(`<div class="mate"><span class="rk">${esc(m[1])}</span>
+          ${numBadge(m[3],heads,true)}<span class="mn">${esc(m[4])}</span>
+          ${m[2]?'<span class="myo">妙</span>':""}
+          <span class="sd">HS${esc(m[5])}${m[6]?"・"+esc(m[6].split("・").slice(1).join("・")):""}</span></div>`);
+      } else if (line.startsWith("**相手候補")){
+        continue;
+      } else if (line.startsWith("**") || line.startsWith("支持") || line.startsWith("- ") || line.startsWith("※")){
+        extras.push(`<p class="tnote">${inline(line.replace(/^- /,""))}</p>`);
+      } else {
+        metas.push(inline(line));
+      }
+    }
+    out.push(`<div class="card">${head}${axis}
+      <p class="tnote">${metas.join("<br>")}</p>
+      ${mates.length?`<div class="mates">${mates.join("")}</div>`:""}
+      ${extras.join("")}</div>`);
+  }
+  return out.join("");
+}
+function renderToday(md){
+  const {intro, secs} = splitSections(md);
+  if (!secs.length) return renderTodayGeneric(md.split("\n"));
+  if (state.ttab >= secs.length) state.ttab = 0;
+  let h = [];
+  h.push(`<div class="seg">` + secs.map((s,i)=>
+    `<button data-f="tt:${i}" class="${state.ttab===i?"on":""}">${esc(s.title.split("（")[0].replace(/\s*\d+鞍$/,""))}</button>`).join("") + `</div>`);
+  const sec = secs[state.ttab];
+  h.push(sec.title.startsWith("レース別") ? renderTodayRaces(sec.lines)
+                                         : renderTodayGeneric(sec.lines));
+  return h.join("");
 }
 
-/* ---------- 汎用Markdown描画（予備） ---------- */
+/* ---------- 汎用（予備） ---------- */
 function mdToHtml(md){
   const lines = md.split("\n");
   let html = [], tbl = null;
@@ -235,19 +334,20 @@ async function fetchDoc(path){
   if (!r.ok) throw new Error("取得失敗 HTTP "+r.status);
   return {text: await r.text(), src:"github"};
 }
-let lastText = "";
+function renderBody(){
+  return lastPath.includes("P1_TODAY") ? (renderP1(lastText) ?? mdToHtml(lastText))
+       : lastPath.includes("TODAY")    ? renderToday(lastText)
+       : mdToHtml(lastText);
+}
 async function show(){
   const path = $("doc").value;
   $("view").innerHTML = "<p class=meta>読み込み中…</p>";
   try {
     const {text, src} = await fetchDoc(path);
-    lastText = text;
+    lastText = text; lastPath = path;
     $("setup").hidden = true;
-    const body = path.includes("P1_TODAY") ? (renderP1(text) ?? mdToHtml(text))
-               : path.includes("TODAY")   ? renderToday(text)
-               : mdToHtml(text);
     $("view").innerHTML =
-      `<div class=meta>${esc(path.split("/").pop())}（${src==="local"?"ローカル":"GitHub"}・${new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})} 取得）</div>` + body;
+      `<div class=meta>${esc(path.split("/").pop())}（${src==="local"?"ローカル":"GitHub"}・${new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})} 取得）</div>` + renderBody();
     bindSeg();
   } catch(e){
     if (e.message==="NOSETUP"){ $("setup").hidden=false; $("view").innerHTML=""; }
@@ -257,10 +357,12 @@ async function show(){
 function bindSeg(){
   document.querySelectorAll(".seg button").forEach(b=>{
     b.onclick = ()=>{
-      segState = b.dataset.seg;
-      const body = renderP1(lastText) ?? mdToHtml(lastText);
+      const [k,v] = b.dataset.f.split(":");
+      if (k==="ba") state.ba = v;
+      else if (k==="tm") state.tm = v;
+      else if (k==="tt") state.ttab = +v;
       const meta = document.querySelector(".meta")?.outerHTML || "";
-      $("view").innerHTML = meta + body;
+      $("view").innerHTML = meta + renderBody();
       bindSeg();
     };
   });
