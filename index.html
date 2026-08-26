@@ -64,6 +64,8 @@
   .p1c[data-p2] { position:relative; cursor:pointer; -webkit-tap-highlight-color:rgba(28,69,135,.08); }
   .p1c[data-p2]::after { content:"›"; position:absolute; right:9px; top:6px; color:#c2c7cf;
                          font-size:18px; line-height:1; font-weight:700; }
+  /* シェブロンと1行目（人気チップ）が重ならないよう右側を空ける */
+  .p1c[data-p2] .c1 { padding-right:15px; }
   .p1c[data-p2]:active { background:#f1f5fb; }
   .aite { display:inline-flex; align-items:center; gap:3px; color:var(--sub); font-size:11px;
           flex-wrap:wrap; }
@@ -760,10 +762,20 @@ function doJump(){
   const el = document.getElementById("p1-" + pendingJump);
   pendingJump = null;
   if (el){
-    el.scrollIntoView({behavior:"smooth", block:"start"});
+    // 画面の中央へ寄せる（上部固定ヘッダーに隠れないように）。
+    // scrollIntoView({block:"center"})に頼らず自前で位置を出す＝smoothが効かない環境でも確実に動く。
+    const y0 = window.scrollY;
+    const target = Math.max(0, el.getBoundingClientRect().top + y0
+                     - Math.max(0, (window.innerHeight - el.offsetHeight) / 2));
+    try { window.scrollTo({ top: target, behavior: "smooth" }); }
+    catch(e){ window.scrollTo(0, target); }
+    // 保険: 700msたっても1pxも動いていなければsmoothが効いていない＝即時に飛ばす
+    setTimeout(()=>{
+      if (window.scrollY === y0 && Math.abs(target - y0) > 2) window.scrollTo(0, target);
+    }, 700);
     el.style.transition = "box-shadow .3s";
     el.style.boxShadow = "0 0 0 3px var(--accent)";
-    setTimeout(()=>{ el.style.boxShadow = ""; }, 1600);
+    setTimeout(()=>{ el.style.boxShadow = ""; }, 4000);   // 目で追える長さに
   }
 }
 function bindSeg(){
