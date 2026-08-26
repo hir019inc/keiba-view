@@ -234,7 +234,7 @@ function renderP1(md){
 /* ---------- P1ヒートマップ: 人気帯×gap帯のマトリクス（狩場の俯瞰） ----------
    P1一覧(レース単位の値)とは切り口を変える(2026-08-26レビュー):
    列=HS1位の人気帯(市場の評価) / 行=gap帯(モデルの確信) / チップ色=配当・中。 */
-const POPB = [["1-2","人気軸\n1-2人"],["3","中途\n3人"],["4-6","妙味\n4-6人"],["7-","軸薄\n7人-"]];
+const POPB = [["1-2","1-2人気"],["3","3人気"],["4-6","4-6人気"],["7-","7人気-"]];
 function popBand(p){ const n=parseInt(p); if(!n) return null;
   return n<=2?"1-2": n===3?"3": n<=6?"4-6":"7-"; }
 const GAPB = [["hi","gap6+"],["mid","gap2-6"],["lo","gap<2"]];
@@ -243,24 +243,18 @@ function gapBand(hs){ const m=String(hs).match(/\(([\d.]+)\)/); const g=m?parseF
 function renderHeatmap(md){
   const {races} = parseP1(md);
   if (!races.length) return null;
-  const bas = ["all", ...new Set(races.map(r=>r.ba))];
+  // 絞り込みタブなし＝1日全体の俯瞰ビュー(2026-08-26レビューで撤去)
   let h = [];
-  h.push(`<div class="seg">` + bas.map(b =>
-    `<button data-f="ba:${b}" class="${state.ba===b?"on":""}">${b==="all"?"全場":esc(b)}</button>`).join("") + `</div>`);
-  h.push(`<div class="seg">` + TM.map(([k,l]) =>
-    `<button data-f="tm:${k}" class="${state.tm===k?"on":""}">${l}</button>`).join("") + `</div>`);
   const grid = {};
   let shown = 0;
   for (const r of races){
-    if (state.ba!=="all" && r.ba!==state.ba) continue;
-    if (state.tm!=="all" && tmOf(r.hour)!==state.tm) continue;
     const pb = popBand(r.pop), gb = gapBand(r.hs);
     if (!pb || !gb) continue;
     shown++;
     (grid[gb+"|"+pb] ??= []).push(r);
   }
   h.push(`<table class="mx"><thead><tr><th></th>` +
-    POPB.map(([k,l])=>`<th>${esc(l).replace("\n","<br>")}</th>`).join("") + `</tr></thead><tbody>`);
+    POPB.map(([k,l])=>`<th>${esc(l)}</th>`).join("") + `</tr></thead><tbody>`);
   for (const [gk, gl] of GAPB){
     h.push(`<tr><td class="glbl">${esc(gl)}</td>`);
     for (const [pk] of POPB){
@@ -275,7 +269,7 @@ function renderHeatmap(md){
   }
   h.push("</tbody></table>");
   if (!shown) h.push(`<p class="note">該当するレースがありません</p>`);
-  h.push(`<footer>縦=HS1位とHS2位の差（gap・モデルの確信）／横=HS1位が何番人気か（市場の評価）。
+  h.push(`<footer>縦=HS1位とHS2位の差（gap）／横=HS1位が何番人気か。
     右の列ほどモデルと市場が割れている鞍・上の行ほどモデル内で抜けている鞍。
     チップ=鞍（場の頭文字+R番号・例 新2=新潟2R）。チップの色=配当・中
     （HS上位7頭BOX35組の中間グループ中央値。〜10/〜50/〜150/〜500/〜2000/2000超の6段階）。
