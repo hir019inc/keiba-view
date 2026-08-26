@@ -28,6 +28,11 @@
   .seg button.on { background:var(--accent); border-color:var(--accent); color:#fff; }
   .card { background:var(--card); border:1px solid var(--line); border-radius:12px;
           padding:10px 12px; margin:0 0 10px; }
+  .p1c { padding:8px 10px; margin:0 0 8px; }
+  .p1c .c2 { margin:5px 0 3px; }
+  .p1c .c3 { margin:0 0 6px; }
+  .p1c .jk { color:var(--sub); font-size:12px; }
+  .p1c .pay { padding:4px 2px; }
   .cardh { font-weight:700; font-size:14.5px; color:var(--accent); margin-bottom:6px; }
   .c1 { display:flex; align-items:baseline; gap:8px; color:var(--sub); font-size:12px;
         flex-wrap:wrap; }
@@ -141,8 +146,10 @@
   .mx .chips { display:flex; flex-wrap:wrap; gap:3px; min-height:24px; }
   .mx td.glbl { background:transparent; border:0; font-size:10.5px; color:var(--sub);
                 font-weight:600; text-align:center; }
-  .rchip { display:inline-block; border-radius:5px; font-size:11px; font-weight:700;
-           padding:3px 4px; line-height:1.1; }
+  .rchip { display:inline-flex; flex-direction:column; align-items:center; border-radius:7px;
+           padding:4px 7px; line-height:1.2; min-width:40px; }
+  .rchip b { font-size:12.5px; font-weight:700; }
+  .rchip i { font-style:normal; font-size:10.5px; opacity:.85; }
 </style>
 </head>
 <body>
@@ -228,13 +235,13 @@ function parseP1(md){
     if (line.startsWith("※")) { note += line + " "; continue; }
     if (!line.startsWith("|") || line.includes("発走 |") || /^\|[\s:|-]+\|$/.test(line)) continue;
     const c = line.replace(/^\||\|$/g,"").split("|").map(x=>x.trim());
-    if (c.length < 9) continue;
-    const m = c[4].match(/^(\d+)番(.+?)\((.+?)\)$/) || [];
+    if (c.length < 10) continue;
+    const m = c[5].match(/^(\d+)番(.+?)\((.+?)\)$/) || [];
     const ba = (c[1].match(/^\D+/)||[""])[0];
     const hour = parseInt(c[0].split(":")[0] || "0");
-    races.push({ time:c[0], hour, place:c[1], ba, course:c[2], heads:c[3],
-                 num:m[1]||"?", name:m[2]||c[4], pop:m[3]||"-",
-                 jockey:c[5], odds:c[6], hs:c[7], pay:c[8].split("/") });
+    races.push({ time:c[0], hour, place:c[1], rname:c[2], ba, course:c[3], heads:c[4],
+                 num:m[1]||"?", name:m[2]||c[5], pop:m[3]||"-",
+                 jockey:c[6], odds:c[7], hs:c[8], pay:c[9].split("/") });
   }
   return { races, note };
 }
@@ -255,14 +262,14 @@ function renderP1(md){
     if (state.ba!=="all" && r.ba!==state.ba) continue;
     if (state.tm!=="all" && tmOf(r.hour)!==state.tm) continue;
     shown++;
-    h.push(`<div class="card">
+    h.push(`<div class="card p1c">
       <div class="c1"><span class="t">${esc(r.time)} ${esc(r.place)}</span>
-        <span>${esc(r.course)} ・ ${esc(r.heads)}頭</span></div>
+        <span>${esc(r.rname||"")}</span><span>${esc(r.course)}・${esc(r.heads)}頭</span>
+        <span class="pop" style="margin-left:auto">${esc(r.pop)}気</span></div>
       <div class="c2">${numBadge(r.num, r.heads)}
         <span class="name">${esc(r.name)}</span>
-        <span class="pop">${esc(r.pop)}気</span></div>
-      <div class="c3"><span>騎手 <b>${esc(r.jockey)}</b></span>
-        <span>オッズ <b>${esc(r.odds)}</b></span>
+        <span class="jk">${esc(r.jockey)}</span></div>
+      <div class="c3"><span>オッズ <b>${esc(r.odds)}</b></span>
         <span>HS <b>${esc(r.hs)}</b></span></div>
       <div class="pays">${r.pay.map((v,i)=>heatCell(v,"pay",payKeys[i]||"")).join("")}</div>
     </div>`);
@@ -308,7 +315,7 @@ function renderHeatmap(md){
       h.push(`<td class="cell"><div class="chips">` + rs.map(r=>{
         const mid = r.pay[2] ?? r.pay[1];
         const [bg,fg] = heat(mid);
-        return `<span class="rchip" style="background:${bg};color:${fg}">${esc(r.ba[0])}${esc(r.place.replace(/\D+/,""))}</span>`;
+        return `<span class="rchip" style="background:${bg};color:${fg}"><b>${esc(r.ba[0])}${esc(r.place.replace(/\D+/,""))}</b><i>${esc(mid??"-")}</i></span>`;
       }).join("") + `</div></td>`);
     }
     h.push(`</tr>`);
@@ -317,7 +324,7 @@ function renderHeatmap(md){
   if (!shown) h.push(`<p class="note">該当するレースがありません</p>`);
   h.push(`<footer>縦=HS1位が何番人気か／横=HS1位とHS2位の差（gap・右ほど抜けている）。
     下の行ほどモデルと市場が割れている鞍・右の列ほどモデル内で抜けている鞍。
-    チップ=鞍（場の頭文字+R番号・例 新2=新潟2R）。チップの色=配当・中
+    チップ=鞍（上段=場の頭文字+R番号・下段=配当・中の倍率）。チップの色=配当・中
     （HS上位7頭BOX35組の中間グループ中央値。〜10/〜50/〜150/〜500/〜2000/2000超の6段階）。
     個別の値はP1選定カードで。</footer>`);
   return h.join("");
@@ -415,7 +422,7 @@ function renderToday(md){
 }
 
 /* ---------- TODAY(V4/JSON): 専用描画 ---------- */
-const QCOL = {A:"#2e9e4f", B:"#8b95a3", C:"#f28c28", D:"#e63946", "-":"#c9d2de"};
+const QCOL = {A:"#2e9e4f", B:"#9ec43c", C:"#f2a03d", D:"#e63946", "-":"#c9d2de"};
 function gq(g){ return `<span class="gq" style="background:${QCOL[g]||QCOL["-"]}">${esc(g)}</span>`; }
 function renderTodayJson(d){
   const tabs = [["nerai","狙い別"],["odds","オッズ動向"],
@@ -464,14 +471,29 @@ function renderOddsMoves(d){
     <div class="grid2">${col("オッズ低下", d.odds.down, "#1d6fd6")}
     ${col("オッズ上昇", d.odds.up, "#f28c28")}</div>`;
 }
+const ASORT = [["rank","HS位順"],["time","発走順"],["pop","人気薄順"]];
+const AQ = [["all","全て"],["ab","調A・B"],["a","調Aのみ"]];
 function renderAlerts(d){
-  return `<p class="meta">HS7位以内 × 8番人気以下・調=調教評価（毎時更新）</p><div class="grid2">`
-    + d.alerts.map(x=>`<div class="al">
+  state.asort ??= "rank"; state.aq ??= "all";
+  let items = [...d.alerts];
+  if (state.aq==="ab") items = items.filter(x=>x.qual==="A"||x.qual==="B");
+  if (state.aq==="a")  items = items.filter(x=>x.qual==="A");
+  if (state.asort==="time") items.sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+  else if (state.asort==="pop") items.sort((a,b)=>b.pop-a.pop || a.rank-b.rank);
+  else items.sort((a,b)=>a.rank-b.rank || b.pop-a.pop);
+  let h = [`<div class="seg">` + ASORT.map(([k,l])=>
+    `<button data-f="as:${k}" class="${state.asort===k?"on":""}">${l}</button>`).join("") + `</div>`];
+  h.push(`<div class="seg">` + AQ.map(([k,l])=>
+    `<button data-f="aq:${k}" class="${state.aq===k?"on":""}">${l}</button>`).join("") + `</div>`);
+  h.push(`<p class="meta">HS7位以内 × 8番人気以下・${items.length}頭（毎時更新）</p><div class="grid2">`);
+  h.push(items.map(x=>`<div class="al">
       <div class="l1">${numBadge(x.num, x.heads, true)}<span class="nm">${esc(x.name)}</span></div>
-      <div class="l2"><span>${esc(x.time||"-")} ${esc(x.place)}</span>
-        <span>${x.pop}人気 ${esc(String(x.odds??"-"))}倍</span>
+      <div class="l2"><span>${esc(x.time||"-")} ${esc(x.place)} ${esc(x.course||"")}・${esc(x.style||"-")}</span></div>
+      <div class="l2"><span>${x.pop}人気 ${esc(String(x.odds??"-"))}倍</span>
         <span>HS${x.rank}位</span>${gq(x.qual)}</div>
-    </div>`).join("") + `</div>`;
+    </div>`).join(""));
+  h.push(`</div>`);
+  return h.join("");
 }
 function renderChokyo(d){
   let h = [`<div class="card"><div class="cardh">A評価 ${d.chokyo.a.length}頭（前日確定）</div>`];
@@ -482,8 +504,8 @@ function renderChokyo(d){
         <span class="tnote">${esc(x.tanpyo||"")}</span></div>
     </div>`).join("") || `<p class="note">該当なし</p>`);
   h.push(`</div>`);
-  h.push(`<div class="card"><div class="cardh">レース別の評価分布（A多→D多順）</div>
-    <p class="tnote">バー=出走頭数に対するA/B/C/Dの割合。Aが多くDも居る鞍=状態差が大きい。</p>`);
+  h.push(`<div class="card"><div class="cardh">レース別の評価分布（A割合→D割合順）</div>
+    <p class="tnote">バー=出走頭数に対するA/B/C/Dの割合（緑→赤）。上ほどAの割合が高い鞍。</p>`);
   for (const q of d.chokyo.dist){
     const n = q.heads || (q.A+q.B+q.C+q.D) || 1;
     const seg = g => q[g] ? `<i style="width:${q[g]/n*100}%;background:${QCOL[g]}"></i>` : "";
@@ -499,7 +521,7 @@ function renderAgari(d){
     + d.agari.map((x,i)=>`<div class="agrow"><span class="rk">${i+1}</span>
       ${numBadge(x.num, x.heads, true)}<span class="nm">${esc(x.name)}</span>
       <span class="sd">${esc(x.time||"-")} ${esc(x.place)}・${esc(x.style)}・${x.pop??"-"}人<br>
-      <span class="vv">${x.val.toFixed(1)}</span></span>
+      <span class="vv">${x.val.toFixed(1)}</span> <span>記録:${esc(x.src||"-")}</span></span>
     </div>`).join("") + `</div>`;
 }
 
@@ -597,6 +619,8 @@ function bindSeg(){
       else if (k==="tm") state.tm = v;
       else if (k==="tt") state.ttab = +v;
       else if (k==="nt") state.ntab = +v;
+      else if (k==="as") state.asort = v;
+      else if (k==="aq") state.aq = v;
       const meta = document.querySelector(".meta")?.outerHTML || "";
       $("view").innerHTML = meta + renderBody();
       bindSeg();
