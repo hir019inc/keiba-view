@@ -582,7 +582,7 @@ function renderChokyo(d){
     </div>`).join("") || `<p class="note">該当なし</p>`);
   h.push(`</div>`);
   h.push(`<div class="card"><div class="cardh">レース別の評価分布（A多い順・D多いものは下へ）</div>
-    <p class="tnote">バー=出走頭数に対するA/B/C/Dの割合（緑→赤）。並びは<b>Aの頭数が多い順→Dを含む鞍は下へ→同じ帯の中は緑（A+B）の長い順</b>。</p>`);
+    <p class="tnote">バー=出走頭数に対するA/B/C/Dの割合（緑→赤）。<b>右端の余白＝調教評価が取れていない馬</b>（0点扱い）。<br>並びは<b>Aの頭数が多い順→Dを含む鞍は下へ→同じ帯の中は緑（A+B）の長い順</b>。</p>`);
   // 並べ替えの正は v4_today.py（同じ式）。ここでも並べ替える＝
   // 旧い順で生成されたTODAY.jsonを開いても表示が揃う（保険）。
   // 並べ替えの正は v4_today.py（同じ式）:
