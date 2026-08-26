@@ -62,6 +62,12 @@
   .err { color:#c0392b; }
   .note { color:var(--sub); font-size:12px; line-height:1.7; }
   footer { color:var(--sub); font-size:11.5px; line-height:1.7; margin:18px 2px; }
+  .cardh { font-weight:700; font-size:14.5px; color:var(--accent); margin-bottom:6px; }
+  .tlist { margin:6px 0; padding-left:0; list-style:none; }
+  .tlist li { padding:7px 0; border-top:1px solid var(--line); line-height:1.55; }
+  .tnote { color:var(--sub); font-size:11.5px; line-height:1.6; }
+  .tsub { font-weight:700; margin:10px 0 2px; }
+  .card p { line-height:1.6; margin:4px 0; }
 </style>
 </head>
 <body>
@@ -143,7 +149,44 @@ function renderP1(md){
   return h.join("");
 }
 
-/* ---------- 汎用Markdown描画（TODAY等） ---------- */
+/* ---------- TODAY: ##セクション=1カードで描画 ---------- */
+function inline(t){
+  // <br>を活かしつつエスケープし、**太字**を反映
+  return t.split("<br>").map(x=>esc(x)).join("<br>")
+          .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+}
+function renderToday(md){
+  const out = [];
+  let card = null, list = null;
+  const closeList = ()=>{ if(list){ card.push("</ul>"); list=null; } };
+  const closeCard = ()=>{ if(card){ closeList(); card.push("</div>"); out.push(card.join("")); card=null; } };
+  for (const raw of md.split("\n")){
+    const line = raw.trim();
+    if (!line || line === "---") { closeList(); continue; }
+    if (line.startsWith("# ") && !line.startsWith("## ")){
+      out.push(`<h2>${inline(line.slice(2))}</h2>`); continue;
+    }
+    if (line.startsWith("## ")){
+      closeCard();
+      card = [`<div class="card"><div class="cardh">${inline(line.slice(3))}</div>`];
+      continue;
+    }
+    if (!card){ out.push(`<p class="note">${inline(line)}</p>`); continue; }
+    if (line.startsWith("- ")){
+      if (!list){ card.push('<ul class="tlist">'); list=true; }
+      card.push(`<li>${inline(line.slice(2))}</li>`); continue;
+    }
+    closeList();
+    if (line.startsWith("※")) card.push(`<p class="tnote">${inline(line)}</p>`);
+    else if (line.startsWith("**") && line.endsWith("**"))
+      card.push(`<p class="tsub">${inline(line)}</p>`);
+    else card.push(`<p>${inline(line)}</p>`);
+  }
+  closeCard();
+  return out.join("\n");
+}
+
+/* ---------- 汎用Markdown描画（予備） ---------- */
 function mdToHtml(md){
   const lines = md.split("\n");
   let html = [], tbl = null;
@@ -200,7 +243,9 @@ async function show(){
     const {text, src} = await fetchDoc(path);
     lastText = text;
     $("setup").hidden = true;
-    const body = path.includes("P1_TODAY") ? (renderP1(text) ?? mdToHtml(text)) : mdToHtml(text);
+    const body = path.includes("P1_TODAY") ? (renderP1(text) ?? mdToHtml(text))
+               : path.includes("TODAY")   ? renderToday(text)
+               : mdToHtml(text);
     $("view").innerHTML =
       `<div class=meta>${esc(path.split("/").pop())}（${src==="local"?"ローカル":"GitHub"}・${new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})} 取得）</div>` + body;
     bindSeg();
