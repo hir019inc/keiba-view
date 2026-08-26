@@ -59,6 +59,10 @@
   .p1c .jk { color:var(--sub); font-size:12px; }
   .p1c .pay { padding:3px 2px; }
   .p1c .pay .v { font-size:13px; }
+  /* P1カード→P2（現状は動線サンプルへ遷移） */
+  .p2go { display:block; margin:6px 0 0; padding:5px; border-radius:7px; text-align:center;
+          background:var(--chip); color:var(--accent); font-size:12px; font-weight:700;
+          text-decoration:none; border:1px solid #d7dee9; }
   .aite { display:inline-flex; align-items:center; gap:3px; color:var(--sub); font-size:11px;
           flex-wrap:wrap; }
   .nrow .hl1 { display:flex; align-items:center; gap:6px; }
@@ -326,6 +330,7 @@ function renderP1(md){
         <span>HS <b>${esc(r.hs)}</b></span>
         <span class="aite">相手 ${(r.aite||[]).map(n=>numBadge(n, r.heads, true)).join("")}</span></div>
       <div class="pays">${r.pay.map(v=>heatCell(v,"pay")).join("")}</div>
+      <a class="p2go" href="p2mock.html?r=${encodeURIComponent(r.place)}">予想へ ›</a>
     </div>`);
   }
   if (!shown) h.push(`<p class="note">該当するレースがありません</p>`);

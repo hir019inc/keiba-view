@@ -62,11 +62,13 @@ table.k td:last-child{text-align:right}
 .mock{background:#fffbe6;border:1px solid #f0d98c;color:#6b5410;font-size:11px;border-radius:8px;
       padding:7px 9px;margin:0 0 10px;line-height:1.6}
 summary{font-size:11.5px;color:var(--sub)}
+.back{display:inline-block;color:var(--accent);font-size:13px;font-weight:700;text-decoration:none;margin:0 0 8px}
 </style></head><body>
 <header><div class="hrow"><span class="silks" id="silks"></span><h1>D.E.R.B.Y.</h1>
   <span class="ver">Ver 4.00</span></div></header>
 <main>
-<div class="mock">動線サンプル。馬・オッズ・HS・脚質・上がり・調教は実データ（2026-08-23 中京7R）。
+<a class="back" href="./">‹ P1選定へ戻る</a>
+<div class="mock" id="mockmsg">動線サンプル。馬・オッズ・脚質・上がり・調教は実データ（2026-08-23 中京7R）。
 <b>3連複の配当だけ近似値</b>で、最高側は過大に伸びます。本番は実オッズ行列。</div>
 <div id="app"></div>
 </main>
@@ -225,4 +227,13 @@ function drop(i){S.log.splice(i,1);save();render();}
 function copyAll(){const t="2026-08-23 買った控え\n"+S.log.map(x=>"- "+x).join("\n");
   navigator.clipboard?.writeText(t).then(()=>alert("コピーしました\n\n"+t),()=>alert(t));}
 render();
+/* P1のどの鞍から来たか。サンプルは中京7Rの材料しか持たないので、違う鞍なら明示する */
+(function(){
+  const q=new URLSearchParams(location.search).get("r");
+  if(!q) return;
+  if(q!=="中京7") document.getElementById("mockmsg").innerHTML =
+    `<b>${esc(q)}から来ました。</b>このサンプルは<b>中京7Rの材料しか持っていない</b>ので、`+
+    `画面は中京7Rのまま表示しています（本番は選んだ鞍の材料が入ります）。`+
+    `3連複の配当は近似値で、最高側は過大に伸びます。`;
+})();
 </script></body></html>
