@@ -104,6 +104,14 @@
   .mv .l2 { font-size:13px; font-weight:600; margin:3px 0; }
   .bar { height:6px; border-radius:3px; background:var(--chip); overflow:hidden; }
   .bar i { display:block; height:100%; border-radius:3px; }
+  .trk { position:relative; height:12px; margin-top:5px; background:var(--chip);
+         border-radius:6px; }
+  .trk u { position:absolute; top:0; width:1px; height:100%; background:var(--line); }
+  .trk .seg { position:absolute; top:4px; height:4px; border-radius:2px; opacity:.55; }
+  .trk .d0 { position:absolute; top:2.5px; width:7px; height:7px; border-radius:50%;
+             background:var(--card); border:1.5px solid; margin-left:-4px; }
+  .trk .d1 { position:absolute; top:1.5px; width:9px; height:9px; border-radius:50%;
+             margin-left:-5px; }
   .al { background:var(--card); border:1px solid var(--line); border-radius:10px;
         padding:7px 8px; margin-bottom:6px; }
   .al .l1 { display:flex; align-items:center; gap:6px; }
@@ -460,16 +468,25 @@ function renderNerai(d){
   return h.join("");
 }
 function renderOddsMoves(d){
+  // オッズ帯の移動を対数目盛(1〜500倍)上で表す: 白丸=前日初値 → 色丸=現在。
+  // 変化率バーは+100%超が並ぶと全て振り切って区別できないため置き換え(2026-08-26)。
+  const X = o => Math.max(0, Math.min(1, Math.log10(Math.max(1, o)) / Math.log10(500))) * 100;
+  const MARKS = [2, 10, 50, 200];
   const col = (title, items, color) => `<div class="gcol"><h3>${title}</h3>` + items.map(m=>{
-    const w = Math.min(100, Math.abs(m.pct));
+    const x0 = X(m.o0), x1 = X(m.o1);
+    const l = Math.min(x0, x1), w = Math.max(1.5, Math.abs(x1 - x0));
     return `<div class="mv">
-      <div class="l1">${numBadge(m.num, m.heads, true)}<b>${esc(m.place)}</b><span>${esc(m.time||"-")}</span></div>
-      <div class="l2">${esc(String(m.o0))} → ${esc(String(m.o1))}倍（${m.pct>0?"+":""}${m.pct}%）</div>
-      <div class="bar"><i style="width:${w}%;background:${color}"></i></div>
+      <div class="l1">${numBadge(m.num, m.heads, true)}<b>${esc(m.place)}</b><span>${esc(m.time||"-")}</span>
+        <span style="margin-left:auto">${esc(String(m.o0))}→<b>${esc(String(m.o1))}倍</b></span></div>
+      <div class="trk">${MARKS.map(v=>`<u style="left:${X(v)}%"></u>`).join("")}
+        <i class="seg" style="left:${l}%;width:${w}%;background:${color}"></i>
+        <i class="d0" style="left:${x0}%;border-color:${color}"></i>
+        <i class="d1" style="left:${x1}%;background:${color}"></i></div>
     </div>`;}).join("") + `</div>`;
-  return `<p class="meta">前日初値→最新の変化率上位（毎時更新・数値のみ）</p>
-    <div class="grid2">${col("オッズ低下", d.odds.down, "#1d6fd6")}
-    ${col("オッズ上昇", d.odds.up, "#f28c28")}</div>`;
+  return `<p class="meta">前日初値(白丸)→最新(色丸)のオッズ帯の移動。<br>
+    目盛=対数(左端1倍・線は2/10/50/200倍)＝左ほど人気側。毎時更新・数値のみ。</p>
+    <div class="grid2">${col("オッズ低下(左へ)", d.odds.down, "#1d6fd6")}
+    ${col("オッズ上昇(右へ)", d.odds.up, "#f28c28")}</div>`;
 }
 const ASORT = [["rank","HS位順"],["time","発走順"],["pop","人気薄順"]];
 const AQ = [["all","全て"],["ab","調A・B"],["a","調Aのみ"]];
