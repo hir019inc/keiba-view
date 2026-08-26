@@ -581,9 +581,15 @@ function renderChokyo(d){
         <span class="tnote">${esc(x.tanpyo||"")}</span></div>
     </div>`).join("") || `<p class="note">該当なし</p>`);
   h.push(`</div>`);
-  h.push(`<div class="card"><div class="cardh">レース別の評価分布（A割合→D割合順）</div>
-    <p class="tnote">バー=出走頭数に対するA/B/C/Dの割合（緑→赤）。上ほどAの割合が高い鞍。</p>`);
-  for (const q of d.chokyo.dist){
+  h.push(`<div class="card"><div class="cardh">レース別の評価分布（A→B→C割合の多い順）</div>
+    <p class="tnote">バー=出走頭数に対するA/B/C/Dの割合（緑→赤）。上ほどAが多い鞍。Aが無い鞍はBの多い順、以下C・Dの順。</p>`);
+  // 並べ替えの正は v4_today.py。ここでも同じ順に並べ替える＝
+  // 旧い順で生成されたTODAY.jsonを開いても表示が揃う（保険）。
+  const _qr = (q,g) => q[g] / (q.heads || (q.A+q.B+q.C+q.D) || 1);
+  const dist = [...d.chokyo.dist].sort((a,b) =>
+    (_qr(b,"A")-_qr(a,"A")) || (_qr(b,"B")-_qr(a,"B")) ||
+    (_qr(b,"C")-_qr(a,"C")) || (_qr(b,"D")-_qr(a,"D")));
+  for (const q of dist){
     const n = q.heads || (q.A+q.B+q.C+q.D) || 1;
     const seg = g => q[g] ? `<i style="width:${q[g]/n*100}%;background:${QCOL[g]}"></i>` : "";
     h.push(`<div class="qrow" data-jump="${esc(q.place)}"><div class="t"><b>${esc(q.time||"-")} ${esc(q.place)}</b></div>
