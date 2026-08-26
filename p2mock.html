@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D.E.R.B.Y. P2 サンプル</title>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--fg:#1a1a1a;--line:#e2e5ea;--accent:#1c4587;--sub:#68707c;--chip:#eef1f6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,"Hiragino Sans",sans-serif;
+     font-size:14px;padding-bottom:96px}
+header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);padding:7px 10px 6px;z-index:9}
+.hrow{display:flex;gap:8px;align-items:center;max-width:640px;margin:0 auto}
+.silks{display:inline-flex;height:19px;border-radius:3px;overflow:hidden;box-shadow:0 0 0 1px var(--line);flex:0 0 auto}
+.silks i{display:block;width:3px;height:100%}
+h1{font-size:16px;margin:0;letter-spacing:.06em;font-weight:800;color:var(--accent)}
+.ver{font-size:10.5px;color:var(--sub);font-weight:600;margin-left:auto}
+main{padding:10px;max-width:640px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 10px}
+.hd{font-size:12px;font-weight:700;color:var(--accent);margin:0 0 7px}
+.note{font-size:11px;color:var(--sub);line-height:1.6;margin:6px 0 0}
+.mini{font-size:11px;color:var(--sub)}
+.seg{display:flex;gap:5px;flex-wrap:wrap}
+.seg button{flex:1 0 auto;font-size:12.5px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;
+            background:var(--card);color:var(--fg);white-space:nowrap}
+.seg button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.lb{font-size:10.5px;color:var(--sub);font-weight:700;margin:0 0 4px}
+.pays{display:flex;gap:5px;margin:6px 0 0}
+.pay{flex:1;border-radius:8px;text-align:center;padding:4px 2px;font-size:13px;font-weight:700}
+.pay span{font-size:9.5px;display:block;font-weight:600;opacity:.8}
+/* --- 馬の選択リスト（全頭表示・内側スクロールなし） --- */
+.row{display:flex;align-items:center;gap:8px;padding:6px 2px;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.sel{width:24px;height:24px;border-radius:99px;flex:0 0 auto;display:inline-flex;align-items:center;
+     justify-content:center;font-size:12px;font-weight:800;border:1px solid var(--line);background:#fff;color:#c2c7cf}
+.sel.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.sel.ax{background:#b8232f;border-color:#b8232f;color:#fff}
+.sel.out{background:#f2f4f7;color:#c2c7cf}
+.num{display:inline-flex;align-items:center;justify-content:center;width:23px;height:23px;border-radius:5px;
+     font-weight:700;font-size:12.5px;border:1px solid transparent;flex:0 0 auto}
+.nm{flex:1;min-width:0;font-weight:700;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mt{font-size:11px;color:var(--sub);white-space:nowrap;font-variant-numeric:tabular-nums}
+.row.dim .nm{color:#b3b9c2}
+.row.cut{border-top:2px solid var(--accent);position:relative;margin-top:14px}
+.row.cut::before{content:attr(data-cut);position:absolute;top:-8px;left:0;background:var(--card);
+  color:var(--accent);font-size:9.5px;font-weight:800;padding:0 6px}
+.up{color:#0a7a3d;font-weight:800}.dn{color:#b8232f;font-weight:800}
+input[type=number]{width:110px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;font-size:14px}
+/* --- 下部固定バー --- */
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid var(--line);
+     padding:8px 10px calc(8px + env(safe-area-inset-bottom));z-index:10;
+     box-shadow:0 -2px 10px rgba(0,0,0,.06)}
+.barin{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:9px}
+.st{flex:1;display:flex;gap:11px;flex-wrap:nowrap;overflow:hidden}
+.st div{line-height:1.15}
+.st .k{font-size:9.5px;color:var(--sub);white-space:nowrap}
+.st .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.keep{flex:0 0 auto;padding:10px 14px;border:0;border-radius:9px;background:var(--accent);color:#fff;
+      font-size:13px;font-weight:700}
+.warn{color:#b8232f}
+table.k{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
+table.k td{padding:3px 4px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+table.k td:last-child{text-align:right}
+.mock{background:#fffbe6;border:1px solid #f0d98c;color:#6b5410;font-size:11px;border-radius:8px;
+      padding:7px 9px;margin:0 0 10px;line-height:1.6}
+summary{font-size:11.5px;color:var(--sub)}
+</style></head><body>
+<header><div class="hrow"><span class="silks" id="silks"></span><h1>D.E.R.B.Y.</h1>
+  <span class="ver">Ver 4.00</span></div></header>
+<main>
+<div class="mock">動線サンプル。馬・オッズ・HS・脚質・上がり・調教は実データ（2026-08-23 中京7R）。
+<b>3連複の配当だけ近似値</b>で、最高側は過大に伸びます。本番は実オッズ行列。</div>
+<div id="app"></div>
+</main>
+<div class="bar"><div class="barin" id="bar"></div></div>
+<script>
+"use strict";
+const H = [{"pop": 1, "num": 1, "name": "トリポリタニア", "jk": "西村(A)", "kyaku": "先", "odds": 3.1, "agari": 36.4, "oikiri": "A", "hsr": 3}, {"pop": 2, "num": 2, "name": "スナークラファエロ", "jk": "団野(B)", "kyaku": "差", "odds": 4.1, "agari": 35.8, "oikiri": "B", "hsr": 4}, {"pop": 3, "num": 13, "name": "ハピ", "jk": "幸英(C)", "kyaku": "追", "odds": 8.2, "agari": 35.7, "oikiri": "B", "hsr": 2}, {"pop": 4, "num": 9, "name": "マーズオデッセイ", "jk": "吉村(C)替", "kyaku": "追", "odds": 11.2, "agari": 35.2, "oikiri": "B", "hsr": 13}, {"pop": 5, "num": 5, "name": "ハギノサステナブル", "jk": "鮫島(B)替", "kyaku": "追", "odds": 7.1, "agari": 35.5, "oikiri": "B", "hsr": 1}, {"pop": 6, "num": 15, "name": "レッドプロフェシー", "jk": "田山(C)替", "kyaku": "追", "odds": 12.6, "agari": 35.5, "oikiri": "B", "hsr": 9}, {"pop": 7, "num": 4, "name": "ロードプレジール", "jk": "斎藤(C)替", "kyaku": "追", "odds": 24.7, "agari": 35.0, "oikiri": "B", "hsr": 8}, {"pop": 8, "num": 6, "name": "リチュアル", "jk": "長岡(C)替", "kyaku": "先", "odds": 15.0, "agari": 37.7, "oikiri": "B", "hsr": 10}, {"pop": 9, "num": 7, "name": "ペイシャモノノフ", "jk": "高倉(C)替", "kyaku": "先", "odds": 21.2, "agari": 37.0, "oikiri": "C", "hsr": 12}, {"pop": 10, "num": 10, "name": "ミッキークレスト", "jk": "酒井(C)替", "kyaku": "差", "odds": 32.1, "agari": 36.5, "oikiri": "B", "hsr": 11}, {"pop": 11, "num": 3, "name": "マリアナトレンチ", "jk": "松若(C)", "kyaku": "差", "odds": 58.3, "agari": 36.8, "oikiri": "C", "hsr": 5}, {"pop": 12, "num": 8, "name": "マンマリアーレ", "jk": "柴田(C)替", "kyaku": "差", "odds": 83.6, "agari": 34.4, "oikiri": "C", "hsr": 14}, {"pop": 13, "num": 12, "name": "ブルーサン", "jk": "田口(C)替", "kyaku": "先", "odds": 68.6, "agari": 36.8, "oikiri": "C", "hsr": 7}, {"pop": 14, "num": 14, "name": "メイショウユズルハ", "jk": "菱田(C)", "kyaku": "追", "odds": 94.1, "agari": 36.5, "oikiri": "B", "hsr": 6}, {"pop": 15, "num": 11, "name": "マリオロード", "jk": "国分(C)替", "kyaku": "追", "odds": 103.6, "agari": 36.7, "oikiri": "C", "hsr": 15}, {"pop": 16, "num": 16, "name": "ラインオブソウル", "jk": "角田(C)", "kyaku": "追", "odds": 81.6, "agari": 36.8, "oikiri": "C", "hsr": 16}];
+const WAKU=[null,["#ffffff","#333","#9aa1ab"],["#222222","#fff","#222"],["#e63946","#fff","#e63946"],
+ ["#1d6fd6","#fff","#1d6fd6"],["#f6d32d","#333","#e3bd0e"],["#2e9e4f","#fff","#2e9e4f"],
+ ["#f28c28","#fff","#f28c28"],["#f4a7c3","#333","#eb8fb2"]];
+const HEADS=16, R="中京7R";
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+function waku(n){const b=Math.floor(HEADS/8),r=HEADS%8;let c=0;
+  for(let f=1;f<=8;f++){c+=b+(f>8-r?1:0);if(n<=c)return f;}return 8;}
+function badge(n){const[bg,fg,bd]=WAKU[waku(n)];
+  return `<span class="num" style="background:${bg};color:${fg};border-color:${bd}">${n}</span>`;}
+document.getElementById("silks").innerHTML=WAKU.slice(1).map(w=>`<i style="background:${w[0]}"></i>`).join("");
+
+const P={};{let s=0;H.forEach(h=>{P[h.num]=0.8/h.odds;s+=P[h.num];});H.forEach(h=>P[h.num]/=s);}
+function trioOdds(a,b,c){const v=[a,b,c].map(n=>P[n]);let t=0;
+  for(const[i,j,k]of[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]])
+    t+=v[i]*(v[j]/(1-v[i]))*(v[k]/(1-v[i]-v[j]));
+  return 0.75/t;}
+
+const TENKAI=[["none","読みなし"],["mae","前残り"],["sashi","差し・追込"],
+              ["agari","上がり勝負"],["tanki","単騎逃げ"],["ran","乱ペース"]];
+const RULE={none:{},mae:{"逃":3,"先":2,"差":-.5,"追":-2},sashi:{"逃":-2,"先":-1.5,"差":2,"追":2.5},
+            agari:{},tanki:{"逃":4,"先":1},ran:{"逃":-2.5,"先":-1.5,"差":2,"追":2.5}};
+/* 形: need=選ぶ頭数, ax=先頭を軸として扱うか */
+const KATA={B5:{n:5,ax:0,l:"B5"},B6:{n:6,ax:0,l:"B6"},B7:{n:7,ax:0,l:"B7"},
+            F5:{n:6,ax:1,l:"F5"},F6:{n:7,ax:1,l:"F6"},F7:{n:8,ax:1,l:"F7"},
+            J2:{n:2,ax:2,l:"2頭軸×ヒモ全"}};
+let S={tenkai:"none",kata:"F6",yosan:1500,sel:[],log:[]};
+try{S.log=JSON.parse(localStorage.getItem("derby_kaime")||"[]")}catch(e){}
+const save=()=>{try{localStorage.setItem("derby_kaime",JSON.stringify(S.log))}catch(e){}};
+
+function auto(){                                  // 展開を当てた既定の並び
+  const ag=[...H].sort((a,b)=>a.agari-b.agari); const gr={}; ag.forEach((h,i)=>gr[h.num]=i+1);
+  return [...H].map(h=>{let sc=-h.hsr;
+      sc+=(RULE[S.tenkai][h.kyaku]||0);
+      if(S.tenkai==="agari") sc+=(HEADS-gr[h.num])*.35;
+      if(S.tenkai==="ran"&&h.odds>=30) sc+=1.2;
+      return {...h,sc,moved:Math.abs(sc+h.hsr)>.01?(sc+h.hsr>0?1:-1):0};
+    }).sort((a,b)=>b.sc-a.sc);
+}
+function need(){ const K=KATA[S.kata]; return K.ax===2?2:K.n; }
+function reset(){ S.sel = auto().slice(0,need()).map(h=>h.num); }
+function topup(){                                  // 形を広げたら不足分を機械の並びから足す
+  for(const h of auto()){ if(S.sel.length>=need()) break;
+    if(!S.sel.includes(h.num)) S.sel.push(h.num); }
+}
+reset();
+
+function combos(){
+  const K=KATA[S.kata], use=S.sel.slice(0,need()), out=[];
+  if(S.sel.length < need()) return {out:[],K,short:need()-S.sel.length};
+  if(K.ax===0){ for(let i=0;i<use.length;i++)for(let j=i+1;j<use.length;j++)for(let k=j+1;k<use.length;k++)
+                  out.push([use[i],use[j],use[k]]); }
+  else if(K.ax===1){ const a=use[0],r=use.slice(1);
+                  for(let i=0;i<r.length;i++)for(let j=i+1;j<r.length;j++) out.push([a,r[i],r[j]]); }
+  else { const[a,b]=use; H.forEach(h=>{if(h.num!==a&&h.num!==b) out.push([a,b,h.num]);}); }
+  return {out,K,short:0};
+}
+function render(){
+  const ord=auto(), {out,K,short}=combos();
+  const useN = need();
+  document.getElementById("app").innerHTML = `
+  <div class="card">
+    <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+      <b style="font-size:14px">15:35 中京7</b><span class="mini">名古屋城ステークス ダ1800・16頭</span></div>
+    <div class="mini" style="margin-top:3px">逃0 先4 差4 追8（機械参考:ミドル寄り）</div>
+    <div class="pays">
+      <div class="pay" style="background:#eef1f6;color:#5a6472">16<span>最低</span></div>
+      <div class="pay" style="background:#ffdca8;color:#7a4a00">160<span>低</span></div>
+      <div class="pay" style="background:#ffb27d;color:#7a2e00">338<span>中</span></div>
+      <div class="pay" style="background:#b8232f;color:#fff">2695<span>高</span></div></div>
+    <div class="note">P1で見た配当。軸なしBOX7の分布＝B7と同じ枠。</div>
+  </div>
+
+  <div class="card">
+    <div class="hd">展開</div>
+    <div class="seg">${TENKAI.map(([k,l])=>
+      `<button class="${S.tenkai===k?"on":""}" onclick="setT('${k}')">${l}</button>`).join("")}</div>
+  </div>
+
+  <div class="card">
+    <div class="hd">買い方</div>
+    <div class="lb">BOX</div>
+    <div class="seg">${["B5","B6","B7"].map(k=>
+      `<button class="${S.kata===k?"on":""}" onclick="setK('${k}')">${k}</button>`).join("")}</div>
+    <div class="lb" style="margin-top:8px">フォーメーション</div>
+    <div class="seg">${["F5","F6","F7","J2"].map(k=>
+      `<button class="${S.kata===k?"on":""}" onclick="setK('${k}')">${KATA[k].l}</button>`).join("")}</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+      <span class="mini">予算</span><input type="number" step="100" value="${S.yosan}"
+        onchange="S.yosan=+this.value;render()"><span class="mini">円</span></div>
+  </div>
+
+  <div class="card">
+    <div class="hd">馬を選ぶ　<span style="color:var(--sub);font-weight:600">
+      ${K.ax===1?"1番目が軸":K.ax===2?"1・2番目が軸":"選んだ順は優先度"}・${useN}頭使用</span>
+      <span style="float:right;display:flex;gap:5px">
+      <button class="mini" style="border:1px solid var(--line);border-radius:6px;background:#fff;padding:2px 8px"
+        onclick="rankAll();render()">全頭に順位</button>
+      <button class="mini" style="border:1px solid var(--line);border-radius:6px;background:#fff;padding:2px 8px"
+        onclick="reset();render()">並べ直す</button></span></div>
+    ${ord.map(h=>{
+      const i=S.sel.indexOf(h.num), on=i>=0, used=on&&i<useN;
+      const cls = !on?"":(K.ax&&i<K.ax?"ax":used?"on":"out");
+      const mv = h.moved>0?'<span class="up">▲</span>':h.moved<0?'<span class="dn">▼</span>':"";
+      const cut = (on&&i===useN) ? ` cut" data-cut="ここから下は買い目に入らない` : "";
+      return `<div class="row ${on?"":"dim"}${cut}" onclick="tap(${h.num})">
+        <span class="sel ${cls}">${on?i+1:""}</span>${badge(h.num)}
+        <span class="nm">${esc(h.name)}</span>
+        <span class="mt">${h.pop}人 ${h.odds} ${h.kyaku} HS${h.hsr}${mv}</span></div>`;}).join("")}
+    <div class="note">タップで選択／解除。上から機械の並び（HSに展開の補正を当てたもの・▲▼＝HS順から動いた馬）。</div>
+  </div>
+
+  ${S.log.length?`<div class="card"><div class="hd">控え ${S.log.length}件（端末内）</div>
+    <table class="k">${S.log.map((r,i)=>`<tr><td>${esc(r)}</td>
+      <td><button class="mini" style="border:1px solid var(--line);border-radius:6px;background:#fff;padding:2px 7px"
+        onclick="drop(${i})">消す</button></td></tr>`).join("")}</table>
+    <button class="keep" style="width:100%;margin-top:8px;background:#fff;color:var(--accent);border:1px solid var(--accent)"
+      onclick="copyAll()">まとめてコピー</button>
+    <div class="note">鞍をまたいで積み上がります（どの鞍を開いても同じ控えが見える）。Macの振り返りへ貼り付け・判定はMac側。</div></div>`:""}
+
+  ${out.length?`<div class="card"><details><summary>買い目 ${out.length}点を見る（オッズ幅 ${
+      (()=>{const o=out.map(c=>trioOdds(...c)).sort((a,b)=>a-b);
+            return o[0].toFixed(0)+"〜"+o[o.length-1].toFixed(0)+"倍";})()}）</summary>
+    <table class="k">${out.map(c=>({c,o:trioOdds(...c)})).sort((a,b)=>a.o-b.o).map(x=>
+      `<tr><td>${x.c.join(" - ")}</td><td>${x.o.toFixed(0)}倍</td></tr>`).join("")}</table></details></div>`:""}`;
+
+  // 下部固定バー
+  const bar=document.getElementById("bar");
+  if(short){ bar.innerHTML=`<div class="st"><div><div class="k">あと${short}頭</div>
+    <div class="v warn">選んでください</div></div></div>`; return; }
+  const n=out.length, unit=Math.max(100,Math.floor(S.yosan/n/100)*100);
+  const os=out.map(c=>trioOdds(...c)).sort((a,b)=>a-b);
+  const mid=os[Math.floor(os.length/2)], safe=os.filter(o=>o>=n).length;
+  bar.innerHTML=`<div class="st">
+    <div><div class="k">点数</div><div class="v">${n}</div></div>
+    <div><div class="k">投資</div><div class="v">${(unit*n).toLocaleString()}</div></div>
+    <div><div class="k">配当・中央</div><div class="v">${mid.toFixed(0)}</div></div>
+    <div><div class="k">トリガミ回避</div><div class="v ${safe/n<.5?"warn":""}">${safe}/${n}</div></div>
+  </div><button class="keep" onclick="keep()">買った</button>`;
+}
+function setT(k){S.tenkai=k;reset();render();}
+function setK(k){S.kata=k;topup();render();}
+function rankAll(){ for(const h of auto()) if(!S.sel.includes(h.num)) S.sel.push(h.num); }
+function tap(n){const i=S.sel.indexOf(n); if(i>=0)S.sel.splice(i,1); else S.sel.push(n); render();}
+function keep(){const {out,K}=combos(); if(!out.length)return;
+  const n=out.length, unit=Math.max(100,Math.floor(S.yosan/n/100)*100);
+  S.log.push(`${R} 3連複 ${K.l} ${S.sel.slice(0,K.ax===2?2:K.n).join("-")} ${n}点×${unit}円 展開=${TENKAI.find(t=>t[0]===S.tenkai)[1]}`);
+  save();render();}
+function drop(i){S.log.splice(i,1);save();render();}
+function copyAll(){const t="2026-08-23 買った控え\n"+S.log.map(x=>"- "+x).join("\n");
+  navigator.clipboard?.writeText(t).then(()=>alert("コピーしました\n\n"+t),()=>alert(t));}
+render();
+</script></body></html>
