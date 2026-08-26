@@ -78,6 +78,15 @@
   .err { color:#c0392b; }
   .note { color:var(--sub); font-size:12px; line-height:1.7; }
   footer { color:var(--sub); font-size:11.5px; line-height:1.7; margin:18px 2px; }
+  .hm { width:100%; border-collapse:separate; border-spacing:3px; table-layout:fixed; }
+  .hm th { font-size:11px; color:var(--sub); font-weight:600; padding:2px 0; border:0;
+           text-align:center; background:transparent; }
+  .hm th:first-child { width:34%; }
+  .hm td { border-radius:6px; text-align:center; padding:8px 2px; font-weight:700;
+           font-size:13px; border:0; white-space:nowrap; overflow:hidden; }
+  .hm td.lbl { background:transparent; text-align:left; font-weight:600; font-size:11.5px;
+               color:var(--fg); padding:8px 0; }
+  .hm .lp { color:var(--sub); font-weight:400; font-size:11px; }
 </style>
 </head>
 <body>
@@ -85,6 +94,7 @@
   <h1 id="title">競馬予想ビュー</h1>
   <select id="doc">
     <option value="00_published/P1_TODAY.md">P1選定</option>
+    <option value="HEATMAP">P1ヒートマップ</option>
     <option value="00_published/TODAY.md">TODAY(V3)</option>
   </select>
   <button id="reload" title="再読込">更新</button>
@@ -137,6 +147,23 @@ function numBadge(num, heads, small){
   return `<span class="num${small?" s":""}" style="background:${bg};color:${fg};border-color:${bd}">${esc(String(num))}</span>`;
 }
 
+/* ---------- 配当の色分け（倍率の大きさ・単色系グラデ） ---------- */
+function heat(v){
+  const x = parseFloat(v);
+  if (isNaN(x))  return ["#f2f4f7","#68707c"];
+  if (x < 10)    return ["#eef1f6","#5a6472"];   // トリガミ帯
+  if (x < 50)    return ["#fff3d0","#6b5410"];
+  if (x < 150)   return ["#ffdca8","#7a4a00"];
+  if (x < 500)   return ["#ffb27d","#7a2e00"];
+  if (x < 2000)  return ["#f2603d","#ffffff"];
+  return ["#b8232f","#ffffff"];                  // 万馬券帯の奥
+}
+function heatCell(v, cls, label){
+  const [bg,fg] = heat(v);
+  return `<div class="${cls}" style="background:${bg};color:${fg}">
+    <div class="v">${esc(v)}</div>${label?`<div class="k" style="color:${fg};opacity:.75">${label}</div>`:""}</div>`;
+}
+
 /* ---------- P1: カード描画（場×時間帯フィルタ） ---------- */
 function parseP1(md){
   const races = []; let note = "";
@@ -181,8 +208,7 @@ function renderP1(md){
       <div class="c3"><span>騎手 <b>${esc(r.jockey)}</b></span>
         <span>オッズ <b>${esc(r.odds)}</b></span>
         <span>HS <b>${esc(r.hs)}</b></span></div>
-      <div class="pays">${r.pay.map((v,i)=>
-        `<div class="pay"><div class="v">${esc(v)}</div><div class="k">${payKeys[i]||""}</div></div>`).join("")}</div>
+      <div class="pays">${r.pay.map((v,i)=>heatCell(v,"pay",payKeys[i]||"")).join("")}</div>
     </div>`);
   }
   if (!shown) h.push(`<p class="note">該当するレースがありません</p>`);
@@ -191,6 +217,35 @@ function renderP1(md){
     HS=値(2位との差)。配当=HS上位7頭BOX35組の3連複オッズ：最低=最も人気側の組（床）／
     低・中・高=安い順3等分の各グループ中央値（この7頭内の相対区分）。取得時点の値。
     馬番の色=枠色（馬番と頭数から算出）。</footer>`);
+  return h.join("");
+}
+
+/* ---------- P1ヒートマップ: 行=レース×列=配当4値の色格子 ---------- */
+function renderHeatmap(md){
+  const {races} = parseP1(md);
+  if (!races.length) return null;
+  const bas = ["all", ...new Set(races.map(r=>r.ba))];
+  let h = [];
+  h.push(`<div class="seg">` + bas.map(b =>
+    `<button data-f="ba:${b}" class="${state.ba===b?"on":""}">${b==="all"?"全場":esc(b)}</button>`).join("") + `</div>`);
+  h.push(`<div class="seg">` + TM.map(([k,l]) =>
+    `<button data-f="tm:${k}" class="${state.tm===k?"on":""}">${l}</button>`).join("") + `</div>`);
+  h.push(`<table class="hm"><thead><tr><th></th><th>最低</th><th>低</th><th>中</th><th>高</th></tr></thead><tbody>`);
+  let shown = 0;
+  for (const r of races){
+    if (state.ba!=="all" && r.ba!==state.ba) continue;
+    if (state.tm!=="all" && tmOf(r.hour)!==state.tm) continue;
+    shown++;
+    h.push(`<tr><td class="lbl">${esc(r.time)} ${esc(r.place)}<span class="lp"> ${esc(r.pop)}気</span></td>`
+      + r.pay.map(v=>{ const [bg,fg]=heat(v);
+          return `<td style="background:${bg};color:${fg}">${esc(v)}</td>`; }).join("")
+      + `</tr>`);
+  }
+  h.push("</tbody></table>");
+  if (!shown) h.push(`<p class="note">該当するレースがありません</p>`);
+  h.push(`<footer>セルの色=配当の大きさ（〜10/〜50/〜150/〜500/〜2000/2000超の6段階）。
+    値=HS上位7頭BOX35組の3連複オッズ：最低=最も人気側の組（床）／低・中・高=安い順3等分の
+    各グループ中央値。行ラベルの人気=HS1位の人気。タップ詳細はP1選定カードで。</footer>`);
   return h.join("");
 }
 
@@ -335,12 +390,13 @@ async function fetchDoc(path){
   return {text: await r.text(), src:"github"};
 }
 function renderBody(){
+  if ($("doc").value === "HEATMAP") return renderHeatmap(lastText) ?? mdToHtml(lastText);
   return lastPath.includes("P1_TODAY") ? (renderP1(lastText) ?? mdToHtml(lastText))
        : lastPath.includes("TODAY")    ? renderToday(lastText)
        : mdToHtml(lastText);
 }
 async function show(){
-  const path = $("doc").value;
+  const path = $("doc").value === "HEATMAP" ? "00_published/P1_TODAY.md" : $("doc").value;
   $("view").innerHTML = "<p class=meta>読み込み中…</p>";
   try {
     const {text, src} = await fetchDoc(path);
