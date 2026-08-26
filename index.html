@@ -32,7 +32,8 @@
   .p1c .c2 { margin:5px 0 3px; }
   .p1c .c3 { margin:0 0 6px; }
   .p1c .jk { color:var(--sub); font-size:12px; }
-  .p1c .pay { padding:4px 2px; }
+  .p1c .pay { padding:3px 2px; }
+  .p1c .pay .v { font-size:13px; }
   .cardh { font-weight:700; font-size:14.5px; color:var(--accent); margin-bottom:6px; }
   .c1 { display:flex; align-items:baseline; gap:8px; color:var(--sub); font-size:12px;
         flex-wrap:wrap; }
@@ -264,7 +265,7 @@ function renderP1(md){
     `<button data-f="ba:${b}" class="${state.ba===b?"on":""}">${b==="all"?"全場":esc(b)}</button>`).join("") + `</div>`);
   h.push(`<div class="seg">` + TM.map(([k,l]) =>
     `<button data-f="tm:${k}" class="${state.tm===k?"on":""}">${l}</button>`).join("") + `</div>`);
-  const payKeys = ["最低","低","中","高"];
+  h.push(`<p class="meta" style="margin:0 2px 8px">配当チップ＝左から 最低/低/中/高（倍・HS上位7頭）</p>`);
   let shown = 0;
   for (const r of races){
     if (state.ba!=="all" && r.ba!==state.ba) continue;
@@ -279,7 +280,7 @@ function renderP1(md){
         <span class="jk">${esc(r.jockey)}</span></div>
       <div class="c3"><span>オッズ <b>${esc(r.odds)}</b></span>
         <span>HS <b>${esc(r.hs)}</b></span></div>
-      <div class="pays">${r.pay.map((v,i)=>heatCell(v,"pay",payKeys[i]||"")).join("")}</div>
+      <div class="pays">${r.pay.map(v=>heatCell(v,"pay")).join("")}</div>
     </div>`);
   }
   if (!shown) h.push(`<p class="note">該当するレースがありません</p>`);
