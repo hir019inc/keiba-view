@@ -332,7 +332,7 @@ function renderP1(md){
     if (state.tm!=="all" && tmOf(r.hour)!==state.tm) continue;
     shown++;
     h.push(`<a class="card p1c" id="p1-${esc(r.place)}" data-p2="${esc(r.place)}"
-      href="p2mock.html?r=${encodeURIComponent(r.place)}">
+      href="p2.html?r=${encodeURIComponent(r.place)}">
       <div class="c1"><span class="t">${esc(r.time)} ${esc(r.place)}</span>
         <span>${esc(r.rname||"")}</span><span>${esc(r.course)}・${esc(r.heads)}頭</span>
         <span class="pop" style="margin-left:auto">${esc(r.pop)}気</span></div>

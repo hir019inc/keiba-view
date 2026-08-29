@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D.E.R.B.Y. P2 予想</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--fg:#1a1a1a;--line:#e2e5ea;--accent:#1c4587;--sub:#68707c;--chip:#eef1f6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,"Hiragino Sans",sans-serif;
+     font-size:14px;padding-bottom:96px}
+header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);padding:7px 10px 6px;z-index:9}
+.hrow{display:flex;gap:8px;align-items:center;max-width:640px;margin:0 auto}
+.silks{display:inline-flex;height:19px;border-radius:3px;overflow:hidden;box-shadow:0 0 0 1px var(--line);flex:0 0 auto}
+.silks i{display:block;width:3px;height:100%}
+h1{font-size:16px;margin:0;letter-spacing:.06em;font-weight:800;color:var(--accent)}
+.ver{font-size:10.5px;color:var(--sub);font-weight:600;margin-left:auto}
+main{padding:10px;max-width:640px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 10px}
+.hd{font-size:12px;font-weight:700;color:var(--accent);margin:0 0 7px}
+.note{font-size:11px;color:var(--sub);line-height:1.6;margin:6px 0 0}
+.mini{font-size:11px;color:var(--sub)}
+.seg{display:flex;gap:5px;flex-wrap:wrap}
+.seg button{flex:1 0 auto;font-size:12.5px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;
+            background:var(--card);color:var(--fg);white-space:nowrap}
+.seg button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.lb{font-size:10.5px;color:var(--sub);font-weight:700;margin:0 0 4px}
+.pays{display:flex;gap:5px;margin:6px 0 0}
+.pay{flex:1;border-radius:8px;text-align:center;padding:4px 2px;font-size:13px;font-weight:700}
+.pay span{font-size:9.5px;display:block;font-weight:600;opacity:.8}
+/* --- 馬の選択リスト（全頭表示・内側スクロールなし） --- */
+.row{display:flex;align-items:center;gap:8px;padding:6px 2px;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.sel{width:24px;height:24px;border-radius:99px;flex:0 0 auto;display:inline-flex;align-items:center;
+     justify-content:center;font-size:12px;font-weight:800;border:1px solid var(--line);background:#fff;color:#c2c7cf}
+.sel.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.sel.ax{background:#b8232f;border-color:#b8232f;color:#fff}
+.sel.out{background:#f2f4f7;color:#c2c7cf}
+.num{display:inline-flex;align-items:center;justify-content:center;width:23px;height:23px;border-radius:5px;
+     font-weight:700;font-size:12.5px;border:1px solid transparent;flex:0 0 auto}
+.nm{flex:1;min-width:0;font-weight:700;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mt{font-size:11px;color:var(--sub);white-space:nowrap;font-variant-numeric:tabular-nums}
+.row.dim .nm{color:#b3b9c2}
+.up{color:#0a7a3d;font-weight:800}.dn{color:#b8232f;font-weight:800}
+input[type=number]{width:110px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;font-size:14px}
+/* --- 下部固定バー --- */
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid var(--line);
+     padding:8px 10px calc(8px + env(safe-area-inset-bottom));z-index:10;
+     box-shadow:0 -2px 10px rgba(0,0,0,.06)}
+.barin{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:9px}
+.st{flex:1;display:flex;gap:11px;flex-wrap:nowrap;overflow:hidden}
+.st div{line-height:1.15}
+.st .k{font-size:9.5px;color:var(--sub);white-space:nowrap}
+.st .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.keep{flex:0 0 auto;padding:10px 14px;border:0;border-radius:9px;background:var(--accent);color:#fff;
+      font-size:13px;font-weight:700}
+.copyall{width:100%;margin-top:8px;padding:9px;border-radius:9px;background:#fff;color:var(--accent);
+         border:1px solid var(--accent);font-size:13px;font-weight:700}
+.warn{color:#b8232f}
+table.k{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
+table.k td{padding:3px 4px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+table.k td:last-child{text-align:right}
+.mock{background:#fffbe6;border:1px solid #f0d98c;color:#6b5410;font-size:11px;border-radius:8px;
+      padding:7px 9px;margin:0 0 10px;line-height:1.6}
+summary{font-size:11.5px;color:var(--sub)}
+.del{display:inline-flex;align-items:center;justify-content:center;width:30px;height:26px;
+     border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--sub);padding:0}
+.del:active{background:#fdecea;color:#b8232f;border-color:#f0b6b6}
+.back{color:var(--accent);font-size:13px;font-weight:700;text-decoration:none;flex:0 0 auto;
+      padding:2px 8px 2px 0;border-right:1px solid var(--line)}
+.rc{font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc b{color:var(--fg);font-size:13.5px}
+
+.err{color:#b8232f;font-size:12.5px;padding:10px}
+.load{color:var(--sub);font-size:12.5px;padding:12px}
+.pick{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 8px}
+.pick a{flex:0 0 auto;font-size:12px;padding:5px 9px;border:1px solid var(--line);border-radius:8px;
+        background:#fff;color:var(--fg);text-decoration:none;white-space:nowrap}
+.pick a.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.unk{color:#b8232f;font-weight:700}
+</style></head><body>
+<header>
+  <div class="hrow"><a class="back" href="./">‹ P1選定</a>
+    <span class="rc" id="rc">読み込み中…</span></div>
+</header>
+<main><div id="app"><p class="load">読み込み中…</p></div></main>
+<div class="bar"><div class="barin" id="bar"></div></div>
+<script>
+"use strict";
+const LS={repo:"kv_repo",token:"kv_token"};
+const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const $=id=>document.getElementById(id);
+const WAKU=[null,["#ffffff","#333","#9aa1ab"],["#222222","#fff","#222"],["#e63946","#fff","#e63946"],
+ ["#1d6fd6","#fff","#1d6fd6"],["#f6d32d","#333","#e3bd0e"],["#2e9e4f","#fff","#2e9e4f"],
+ ["#f28c28","#fff","#f28c28"],["#f4a7c3","#333","#eb8fb2"]];
+function waku(n,heads){n=+n;heads=+heads;if(!n||!heads)return 0;if(heads<=8)return n;
+  const b=Math.floor(heads/8),r=heads%8;let c=0;
+  for(let f=1;f<=8;f++){c+=b+(f>8-r?1:0);if(n<=c)return f;}return 8;}
+function badge(n,heads){const [bg,fg,bd]=WAKU[waku(n,heads)]||["#1c4587","#fff","transparent"];
+  return `<span class="num" style="background:${bg};color:${fg};border-color:${bd}">${esc(n)}</span>`;}
+
+/* ---------- 取得（index.html と同じ経路: ローカル→GitHub API） ---------- */
+async function fetchDoc(path){
+  try{ const r=await fetch("../"+path,{cache:"no-store"}); if(r.ok) return await r.text(); }catch(e){}
+  const repo=localStorage.getItem(LS.repo), token=localStorage.getItem(LS.token);
+  if(!repo||!token) throw new Error("NOSETUP");
+  const r=await fetch(`https://api.github.com/repos/${repo}/contents/${encodeURI(path)}`,
+    {headers:{"Accept":"application/vnd.github.raw+json","Authorization":`Bearer ${token}`,
+              "X-GitHub-Api-Version":"2022-11-28"},cache:"no-store"});
+  if(r.status===401||r.status===403) throw new Error("トークンが無効か権限不足です");
+  if(r.status===404) throw new Error("まだ生成されていません: "+path);
+  if(!r.ok) throw new Error("取得失敗 HTTP "+r.status);
+  return await r.text();
+}
+
+/* ---------- 状態 ---------- */
+const TENKAI=[["none","読みなし"],["mae","前残り"],["sashi","差し・追込"],
+              ["agari","上がり勝負"],["tanki","単騎逃げ"],["ran","乱ペース"]];
+const RULE={none:{},mae:{"逃":3,"先":2,"差":-.5,"追":-2},sashi:{"逃":-2,"先":-1.5,"差":2,"追":2.5},
+            agari:{},tanki:{"逃":4,"先":1},ran:{"逃":-2.5,"先":-1.5,"差":2,"追":2.5}};
+const KATA={B5:{n:5,ax:0,l:"B5"},B6:{n:6,ax:0,l:"B6"},B7:{n:7,ax:0,l:"B7"},
+            F5:{n:6,ax:1,l:"F5"},F6:{n:7,ax:1,l:"F6"},F7:{n:8,ax:1,l:"F7"},
+            J2:{n:2,ax:2,l:"2頭軸×ヒモ全"}};
+let PACK=null, SF=null, IDX=null;
+let S={tenkai:"none",kata:"F6",yosan:1500,sel:[],log:[]};
+try{S.log=JSON.parse(localStorage.getItem("derby_kaime")||"[]")}catch(e){}
+const save=()=>{try{localStorage.setItem("derby_kaime",JSON.stringify(S.log))}catch(e){}};
+
+const oddsOf=(a,b,c)=>{ if(!SF) return null;
+  const k=[a,b,c].map(Number).sort((x,y)=>x-y).join("-"); const v=SF.odds[k];
+  return (v===undefined)?null:v; };
+
+function auto(){
+  const H=PACK.horses;
+  const ag=[...H].filter(h=>h.agari!=null).sort((a,b)=>a.agari-b.agari);
+  const gr={}; ag.forEach((h,i)=>gr[h.num]=i+1);
+  return [...H].map(h=>{let sc=-h.hsr;
+      sc+=(RULE[S.tenkai][h.kyaku]||0);
+      if(S.tenkai==="agari"&&gr[h.num]) sc+=(PACK.heads-gr[h.num])*.35;
+      if(S.tenkai==="ran"&&h.odds>=30) sc+=1.2;
+      return {...h,sc,moved:Math.abs(sc+h.hsr)>.01?(sc+h.hsr>0?1:-1):0};
+    }).sort((a,b)=>b.sc-a.sc);
+}
+const need=()=>{const K=KATA[S.kata];return K.ax===2?2:K.n;};
+function reset(){ S.sel=auto().slice(0,need()).map(h=>h.num); }
+function topup(){ for(const h of auto()){ if(S.sel.length>=need())break;
+  if(!S.sel.includes(h.num)) S.sel.push(h.num); } }
+
+function combos(){
+  const K=KATA[S.kata], use=S.sel.slice(0,need()), out=[];
+  if(S.sel.length<need()) return {out:[],K,short:need()-S.sel.length};
+  if(K.ax===0){ for(let i=0;i<use.length;i++)for(let j=i+1;j<use.length;j++)for(let k=j+1;k<use.length;k++)
+                  out.push([use[i],use[j],use[k]]); }
+  else if(K.ax===1){ const a=use[0],r=use.slice(1);
+    for(let i=0;i<r.length;i++)for(let j=i+1;j<r.length;j++) out.push([a,r[i],r[j]]); }
+  else { const [a,b]=use; PACK.horses.forEach(h=>{if(h.num!==a&&h.num!==b) out.push([a,b,h.num]);}); }
+  return {out,K,short:0};
+}
+
+function render(){
+  const ord=auto(), {out,K,short}=combos(), useN=need();
+  $("rc").innerHTML=`<b>${esc(PACK.post_time)} ${esc(PACK.venue)}${esc(PACK.r)}</b> `+
+    `${esc(PACK.race_name)} ${esc(PACK.course)}・${esc(PACK.heads)}頭`;
+  const near=(IDX?.races||[]).slice(0,0);
+  $("app").innerHTML=`
+  <div class="card">
+    <div class="mini">逃${PACK.pace.nige} 先${PACK.pace.sen} 差${PACK.pace.sashi} 追${PACK.pace.oi}
+      （機械参考:${esc(PACK.pace.guess)}寄り）・馬場${esc(PACK.going||"-")}</div>
+    <div class="note">配当はP1が取得した三連複オッズの実値（${SF?Object.keys(SF.odds).length:0}組）。
+      取得時点の値なので、発走直前は再読込を。</div>
+  </div>
+
+  <div class="card"><div class="hd">展開</div>
+    <div class="seg">${TENKAI.map(([k,l])=>
+      `<button class="${S.tenkai===k?"on":""}" onclick="setT('${k}')">${l}</button>`).join("")}</div></div>
+
+  <div class="card"><div class="hd">買い方</div>
+    <div class="lb">BOX</div>
+    <div class="seg">${["B5","B6","B7"].map(k=>
+      `<button class="${S.kata===k?"on":""}" onclick="setK('${k}')">${k}</button>`).join("")}</div>
+    <div class="lb" style="margin-top:8px">フォーメーション</div>
+    <div class="seg">${["F5","F6","F7","J2"].map(k=>
+      `<button class="${S.kata===k?"on":""}" onclick="setK('${k}')">${KATA[k].l}</button>`).join("")}</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:9px">
+      <span class="mini">予算</span><input type="number" step="100" value="${S.yosan}"
+        onchange="S.yosan=+this.value;render()"><span class="mini">円</span></div>
+  </div>
+
+  <div class="card">
+    <div class="hd">馬を選ぶ　<span style="color:var(--sub);font-weight:600">
+      ${K.ax===1?"1番目が軸":K.ax===2?"1・2番目が軸":"選んだ順は優先度"}・${useN}頭使用</span>
+      <button class="mini" style="float:right;border:1px solid var(--line);border-radius:6px;background:#fff;padding:3px 9px"
+        onclick="reset();render()">デフォルトに戻す</button></div>
+    ${ord.map(h=>{
+      const i=S.sel.indexOf(h.num), on=i>=0, used=on&&i<useN;
+      const cls=!on?"":(K.ax&&i<K.ax?"ax":used?"on":"out");
+      const mv=h.moved>0?'<span class="up">▲</span>':h.moved<0?'<span class="dn">▼</span>':"";
+      return `<div class="row ${on?"":"dim"}" onclick="tap(${h.num})">
+        <span class="sel ${cls}">${on?i+1:""}</span>${badge(h.num,PACK.heads)}
+        <span class="nm">${esc(h.name)}</span>
+        <span class="mt">${esc(h.pop??"-")}人 ${esc(h.odds??"-")} ${esc(h.kyaku)} 調${esc(h.oikiri)} HS${h.hsr}${mv}</span>
+      </div>`;}).join("")}
+    <div class="note">タップで選択／解除。上から機械の並び（HSに展開の補正・▲▼＝HS順から動いた馬）。</div>
+  </div>
+
+  ${S.log.length?`<div class="card"><div class="hd">買った記録 ${S.log.length}件（この端末に保存）</div>
+    <table class="k">${S.log.map((r,i)=>`<tr><td>${esc(r)}</td>
+      <td><button class="del" onclick="drop(${i})" aria-label="削除">${TRASH}</button></td></tr>`).join("")}</table>
+    <button class="copyall" onclick="copyAll()">まとめてコピー</button>
+    <div class="note">鞍をまたいで貯まります。Macの振り返りへ貼り付け・判定はMac側。</div></div>`:""}
+
+  ${out.length?`<div class="card"><details><summary>買い目 ${out.length}点を見る</summary>
+    <table class="k">${out.map(c=>({c,o:oddsOf(...c)})).sort((a,b)=>(a.o??1e9)-(b.o??1e9)).map(x=>
+      `<tr><td>${x.c.join(" - ")}</td><td>${x.o==null?'<span class="unk">不明</span>':x.o+"倍"}</td></tr>`
+    ).join("")}</table></details></div>`:""}`;
+
+  const bar=$("bar");
+  if(short){ bar.innerHTML=`<div class="st"><div><div class="k">あと${short}頭</div>
+    <div class="v warn">選んでください</div></div></div>`; return; }
+  const n=out.length, unit=Math.max(100,Math.floor(S.yosan/n/100)*100);
+  const os=out.map(c=>oddsOf(...c)).filter(v=>v!=null).sort((a,b)=>a-b);
+  const unknown=n-os.length;
+  const mid=os.length?os[Math.floor(os.length/2)]:null;
+  const safe=os.filter(o=>o>=n).length;
+  bar.innerHTML=`<div class="st">
+    <div><div class="k">点数</div><div class="v">${n}</div></div>
+    <div><div class="k">投資</div><div class="v">${(unit*n).toLocaleString()}</div></div>
+    <div><div class="k">配当・中央</div><div class="v">${mid==null?"-":mid.toFixed(0)}</div></div>
+    <div><div class="k">トリガミ回避</div><div class="v ${os.length&&safe/os.length<.5?"warn":""}">${safe}/${os.length}</div></div>
+    ${unknown?`<div><div class="k">配当不明</div><div class="v warn">${unknown}</div></div>`:""}
+  </div><button class="keep" onclick="keep()">買った</button>`;
+}
+const TRASH='<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">'+
+ '<path fill="currentColor" d="M6 2h4l.6 1H14v1.6H2V3h3.4L6 2zM3.4 5.6h9.2l-.7 8.2a1 1 0 0 1-1 .9H5.1a1 1 0 0 1-1-.9L3.4 5.6zm2.4 1.5.3 6h1.1l-.3-6H5.8zm3.3 0-.3 6h1.1l.3-6H9.1z"/></svg>';
+function setT(k){S.tenkai=k;reset();render();}
+function setK(k){S.kata=k;topup();render();}
+function tap(n){const i=S.sel.indexOf(n);if(i>=0)S.sel.splice(i,1);else S.sel.push(n);render();}
+function keep(){const {out,K}=combos(); if(!out.length)return;
+  const n=out.length, unit=Math.max(100,Math.floor(S.yosan/n/100)*100);
+  S.log.push(`${PACK.venue}${PACK.r}R 3連複 ${K.l} ${S.sel.slice(0,need()).join("-")} ${n}点×${unit}円 展開=${TENKAI.find(t=>t[0]===S.tenkai)[1]}`);
+  save();render();}
+function drop(i){S.log.splice(i,1);save();render();}
+function copyAll(){const t=`${PACK.date} 買った記録\n`+S.log.map(x=>"- "+x).join("\n");
+  navigator.clipboard?.writeText(t).then(()=>alert("コピーしました\n\n"+t),()=>alert(t));}
+
+/* ---------- 起動: ?rid=<raceId> か ?r=<場R> ---------- */
+(async()=>{
+  const q=new URLSearchParams(location.search);
+  try{
+    IDX=JSON.parse(await fetchDoc("00_published/p2/index.json"));
+    let rid=q.get("rid");
+    if(!rid){ const r=q.get("r");
+      const hit=(IDX.races||[]).find(x=>x.place===r);
+      if(!hit) throw new Error(`${r||"レース"} が本日の一覧にありません（P1から選び直してください）`);
+      rid=hit.race_id; }
+    PACK=JSON.parse(await fetchDoc(`00_published/p2/${rid}.json`));
+    try{ SF=JSON.parse(await fetchDoc(`00_published/p2/sf_${rid}.json`)); }catch(e){ SF=null; }
+    reset(); render();
+  }catch(e){
+    $("rc").textContent="";
+    $("app").innerHTML = e.message==="NOSETUP"
+      ? `<p class="err">初回設定が未了です。P1選定の画面でトークンを保存してから開いてください。</p>`
+      : `<p class="err">${esc(e.message)}</p>`;
+  }
+})();
+</script></body></html>
