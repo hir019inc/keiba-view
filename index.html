@@ -61,7 +61,10 @@
   .p1c .pay .v { font-size:13px; }
   /* P1カード→P2（現状は動線サンプルへ遷移） */
   /* カードごとタップでP2へ（ボタンは置かない・右上に控えめな手掛かり） */
-  .p1c[data-p2] { position:relative; cursor:pointer; -webkit-tap-highlight-color:rgba(28,69,135,.08); }
+  /* カードは <a>。iOSで div+onclick が効かない事故を避けるため本物のリンクにしている。 */
+  .p1c[data-p2] { position:relative; display:block; text-decoration:none; color:inherit;
+                  cursor:pointer; touch-action:manipulation;
+                  -webkit-tap-highlight-color:rgba(28,69,135,.08); }
   .p1c[data-p2]::after { content:"›"; position:absolute; right:9px; top:6px; color:#c2c7cf;
                          font-size:18px; line-height:1; font-weight:700; }
   /* シェブロンと1行目（人気チップ）が重ならないよう右側を空ける */
@@ -328,7 +331,8 @@ function renderP1(md){
     if (state.ba!=="all" && r.ba!==state.ba) continue;
     if (state.tm!=="all" && tmOf(r.hour)!==state.tm) continue;
     shown++;
-    h.push(`<div class="card p1c" id="p1-${esc(r.place)}" data-p2="${esc(r.place)}">
+    h.push(`<a class="card p1c" id="p1-${esc(r.place)}" data-p2="${esc(r.place)}"
+      href="p2mock.html?r=${encodeURIComponent(r.place)}">
       <div class="c1"><span class="t">${esc(r.time)} ${esc(r.place)}</span>
         <span>${esc(r.rname||"")}</span><span>${esc(r.course)}・${esc(r.heads)}頭</span>
         <span class="pop" style="margin-left:auto">${esc(r.pop)}気</span></div>
@@ -339,7 +343,7 @@ function renderP1(md){
         <span>HS <b>${esc(r.hs)}</b></span>
         <span class="aite">相手 ${(r.aite||[]).map(n=>numBadge(n, r.heads, true)).join("")}</span></div>
       <div class="pays">${r.pay.map(v=>heatCell(v,"pay")).join("")}</div>
-    </div>`);
+    </a>`);
   }
   if (!shown) h.push(`<p class="note">該当するレースがありません</p>`);
   h.push(`<footer>${esc(note)}<br>
@@ -742,7 +746,7 @@ async function show(){
     $("setup").hidden = true;
     $("view").innerHTML =
       `<div class=meta>${esc(path.split("/").pop())}（${src==="local"?"ローカル":"GitHub"}・${new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})} 取得）</div>` + renderBody();
-    bindSeg(); bindJump(); bindP2(); doJump();
+    bindSeg(); bindJump(); doJump();
   } catch(e){
     if (e.message==="NOSETUP"){ $("setup").hidden=false; $("view").innerHTML=""; }
     else $("view").innerHTML = `<p class=err>${esc(e.message)}</p>`;
@@ -751,11 +755,6 @@ async function show(){
   }
 }
 let pendingJump = null;
-function bindP2(){
-  document.querySelectorAll("[data-p2]").forEach(el=>{
-    el.onclick = ()=>{ location.href = "p2mock.html?r=" + encodeURIComponent(el.dataset.p2); };
-  });
-}
 function bindJump(){
   document.querySelectorAll("[data-jump]").forEach(el=>{
     el.style.cursor = "pointer";
@@ -801,7 +800,7 @@ function bindSeg(){
       else if (k==="aq") state.aq = v;
       const meta = document.querySelector(".meta")?.outerHTML || "";
       $("view").innerHTML = meta + renderBody();
-      bindSeg(); bindJump(); bindP2();
+      bindSeg(); bindJump();
     };
   });
 }
