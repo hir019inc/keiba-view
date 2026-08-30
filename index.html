@@ -176,19 +176,21 @@
   .tkr .l1 .v { color:var(--sub); }
   .tkr .l1 .v b { color:var(--fg); }
   .tkr .l1 .dv { margin-left:auto; font-weight:700; font-variant-numeric:tabular-nums; }
-  /* 軸は 左=前(逃げ・先行) → 右=差し。前残り率が高いほど左に来る（位置 = 1 - 前残り率） */
-  .tkg { display:flex; align-items:center; gap:5px; margin:5px 0 4px; }
+  /* 軸は 左=前(逃げ・先行) → 右=差し。目盛は前残り%（左端100・右端0）＝
+     表示している数字と丸の位置がそのまま一致する（位置 = 1 - 前残り率 だと数字と合わず違和感が出た） */
+  .tkg { display:flex; align-items:center; gap:5px; margin:5px 0 0; }
   .tkg .e { font-size:9.5px; color:var(--sub); width:14px; text-align:center; flex:none; }
-  .tkr .g { position:relative; flex:1; height:9px; border-radius:5px;
+  .tkr .g { position:relative; flex:1; height:10px; border-radius:5px;
             background:linear-gradient(90deg,#e3edfb,#f3f5f8 45%,#f3f5f8 55%,#fdeee6); }
-  .tkr .g .mid { position:absolute; left:50%; top:1px; width:1px; height:7px;
-                 background:var(--line); }
-  /* 平常値→当日 の移動を結ぶバー。色=移動の向き（青=前寄りへ／橙=差し寄りへ） */
-  .tkr .g .seg { position:absolute; top:2.5px; height:4px; border-radius:2px; opacity:.75; }
-  .tkr .g .base { position:absolute; top:0px; width:9px; height:9px; border-radius:50%;
+  .tkr .g .tk { position:absolute; top:1px; width:1px; height:8px; background:var(--line); }
+  /* 平常値→当日 の移動を結ぶバー。色の濃さ＝ズレの大きさ */
+  .tkr .g .seg { position:absolute; top:3px; height:4px; border-radius:2px; }
+  .tkr .g .base { position:absolute; top:0.5px; width:9px; height:9px; border-radius:50%;
                   background:var(--card); border:2px solid #5a6472; margin-left:-4.5px; }
-  .tkr .g .now { position:absolute; top:-3px; width:3px; height:15px; border-radius:1.5px;
-                 background:#1d4587; margin-left:-1.5px; }
+  .tkr .g .now { position:absolute; top:-3px; width:3px; height:16px; border-radius:1.5px;
+                 background:#111; margin-left:-1.5px; }
+  .tkscale { display:flex; margin:1px 19px 4px; font-size:9px; color:var(--sub);
+             justify-content:space-between; }
   .tkr .rs { display:flex; gap:4px; flex-wrap:wrap; }
   .tkr .rs span { font-size:10.5px; padding:1px 5px; border-radius:4px;
                   background:var(--chip); color:var(--sub); }
@@ -319,7 +321,7 @@ const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;
 const inline = t => t.split("<br>").map(x=>esc(x)).join("<br>")
                      .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
 /* ★バージョン表記＝ここだけ書き換える（モデル正典のVerと揃える） */
-const VER = "4.07";
+const VER = "4.03";
 const TABS = [["00_published/P1_TODAY.md","P1選定"],["HEATMAP","ヒートマップ"],["TODAYV4","TODAY"]];
 let state = { ba:"all", tm:"all", ttab:0, doc:TABS[0][0] };
 let lastText = "", lastPath = "", genAt = null, fetchAt = null;
@@ -681,19 +683,21 @@ function renderTenkai(t){
   const row = c => {
     const hasB = c.base != null, hasT = c.today != null;
     const dev = (hasB && hasT) ? (c.today - c.base) : null;
-    // 平常値と当日を結ぶバー。左へ動いた=前寄り(青)／右へ動いた=差し寄り(橙)
+    // 平常値と当日を結ぶバー。色の濃さ＝ズレの大きさ（向きは○と│の位置と±ptで読む）
     let seg = "";
     if (hasB && hasT) {
       const x0 = +X(c.base), x1 = +X(c.today);
       const l = Math.min(x0, x1), w = Math.max(1.5, Math.abs(x1 - x0));
-      seg = `<i class="seg" style="left:${l}%;width:${w}%;
-             background:${x1 < x0 ? "#1d4587" : "#c9622a"}"></i>`;
+      const a = Math.abs(dev) * 100;
+      const col = a < 10 ? "#c3cedb" : a < 25 ? "#8fb0d6" : a < 40 ? "#4b7bb5" : "#1d4587";
+      seg = `<i class="seg" style="left:${l}%;width:${w}%;background:${col}"></i>`;
     }
     const bar = (hasB || hasT) ? `<div class="tkg"><span class="e">前</span>
-      <div class="g"><i class="mid"></i>${seg}
+      <div class="g">${[25,50,75].map(v=>`<i class="tk" style="left:${v}%"></i>`).join("")}${seg}
         ${hasB?`<span class="base" style="left:${X(c.base)}%"></span>`:""}
         ${hasT?`<span class="now" style="left:${X(c.today)}%"></span>`:""}
-      </div><span class="e">差</span></div>` : "";
+      </div><span class="e">差</span></div>
+      <div class="tkscale"><span>100</span><span>75</span><span>50</span><span>25</span><span>0</span></div>` : "";
     return `<div class="tkr">
       <div class="l1"><span class="d">${esc(c.dist)}</span>
         <span class="v">前残り 平常 <b>${hasB?pct(c.base):"-"}</b></span>
@@ -719,8 +723,9 @@ function renderTenkai(t){
     コース間の幅は71pt（函館ダ1200の78%〜東京芝2300m-の8%）＝ここに情報がある。<br>
     <b>当日の「ズレ」は後続を予測しません</b>（${t.n}鞍で検証・ズレで層別しても後続は±2pt以内）。
     事実の記録として併記しているだけで、これを見て買い方を変える根拠はありません。<br>
-    軸は<b>左=前（逃げ・先行）／右=差し（差し・追込）</b>。○=平常値／│=当日／
-    バー=その移動（青=当日は前寄り／橙=当日は差し寄り）。
+    軸は<b>左=前（逃げ・先行）／右=差し（差し・追込）</b>で、<b>目盛は前残り%（左端100・右端0）</b>
+    ＝表示している数字の位置に○と│が来ます。○=平常値／│=当日／バー=その移動で、
+    <b>色が濃いほどズレが大きい</b>（薄灰&lt;10pt・薄青&lt;25pt・青&lt;40pt・濃青40pt以上）。
     数字は「3着内に前が2頭以上入った鞍の割合」＝<b>前残り率</b>（高いほど前が残る＝左寄り）。<br>
     平常値は${esc(t.asof||"")}時点・全体${(t.overall*100).toFixed(1)}%。</p>` + cards;
 }
