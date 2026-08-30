@@ -89,7 +89,7 @@
   .mx2 tr:last-child td { border-bottom:0; }
   /* TODAYの各行 → P1選定の該当カードへ（ヒートマップのチップと同じ動き） */
   [data-jump] { cursor:pointer; -webkit-tap-highlight-color:rgba(28,69,135,.08); }
-  .nrow[data-jump]:active, .mv[data-jump]:active, .al[data-jump]:active, .ta[data-jump]:active,
+  .nrow[data-jump]:active, .mv[data-jump]:active, .al[data-jump]:active, .ta[data-jump]:active, .tah2[data-jump]:active,
   .qrow[data-jump]:active, .agrow[data-jump]:active { background:#f1f5fb; }
   .cardh { font-weight:700; font-size:14.5px; color:var(--accent); margin-bottom:6px; }
   .c1 { display:flex; align-items:baseline; gap:8px; color:var(--sub); font-size:12px;
@@ -164,14 +164,28 @@
   .tah:first-child { margin-top:2px; }
   .mv { background:var(--card); border:1px solid var(--line); border-radius:10px;
         padding:7px 8px; margin-bottom:6px; }
-  /* 単勝アラート: HS8位以下×現在4-9番人気×朝から支持が増えた馬。検証中なので枠で区別する */
-  .ta { background:var(--card); border:1px solid var(--line); border-left:3px solid #1d6fd6;
-        border-radius:10px; padding:7px 9px; margin-bottom:6px; }
-  .ta .l1 { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--sub); }
-  .ta .l1 b { color:var(--fg); }
-  .ta .l2 { font-size:13px; font-weight:600; margin:3px 0 1px; }
-  .ta .l3 { font-size:11.5px; color:var(--sub); }
-  .ta .dn { color:#1d6fd6; font-weight:700; }
+  /* 単勝アラート: HS8位以下×現在4-9番人気×朝から支持が増えた馬。
+     対象が20頭前後になるので鞍ごとに束ねた1行リストにする（縦を使わない） */
+  .talist { border:1px solid var(--line); border-radius:10px; overflow:hidden;
+            background:var(--card); }
+  .tag { border-top:1px solid var(--line); }
+  .tag:first-child { border-top:0; }
+  .tah2 { display:flex; align-items:center; gap:6px; padding:4px 8px;
+          background:var(--chip); font-size:11.5px; color:var(--sub); }
+  .tah2 b { color:var(--fg); font-size:12.5px; }
+  .ta { display:grid; grid-template-columns:auto minmax(0,1fr) auto auto auto;
+        align-items:center; gap:5px; padding:4px 8px; font-size:12px;
+        border-top:1px solid var(--line); }
+  .tag .ta:first-of-type { border-top:0; }
+  /* min-width:0 が無いとgrid内で馬名が縮まず、右端の%が折り返す */
+  .ta .nm { font-weight:600; overflow:hidden; text-overflow:ellipsis;
+            white-space:nowrap; font-size:12.5px; min-width:0; }
+  .ta .hp { color:var(--sub); font-size:10.5px; white-space:nowrap; }
+  .ta .od { font-variant-numeric:tabular-nums; white-space:nowrap; font-size:11px;
+            color:var(--sub); }
+  .ta .od b { color:#1d6fd6; }
+  .ta .pc { font-variant-numeric:tabular-nums; font-weight:700; color:#1d6fd6;
+            font-size:11.5px; min-width:36px; text-align:right; }
   .mv .l1 { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--sub); }
   .mv .l1 b { color:var(--fg); }
   .mv .l2 { font-size:13px; font-weight:600; margin:3px 0; }
@@ -585,18 +599,29 @@ function renderOddsMoves(d){
         <i class="d1" style="left:${x1}%;background:${color}"></i></div>
     </div>`;}).join("") + `</div>`;
   const ta = d.odds.tansho || [];
+  // 鞍ごとに束ねる（同じレースに2頭出ることがある）。並びは発走順。
+  const grp = [];
+  ta.forEach(t=>{
+    const g = grp[grp.length-1];
+    if (g && g.place === t.place) g.rows.push(t);
+    else grp.push({place:t.place, time:t.time, heads:t.heads, rows:[t]});
+  });
   const taBlock = `<h3 class="tah">単勝アラート ${ta.length}頭</h3>
-    <p class="meta">HS8位以下 × 現在4-9番人気 × 朝から支持が増えた馬(オッズ-5%以上)。<br>
-    2026-07-25〜08-30の211頭で単勝回収率117.3%(単勝の払戻率は80%)。ただし95%区間[64%,179%]＝
+    <p class="meta">HS8位以下 × 現在4-9番人気 × 朝から支持が増えた馬(オッズ-5%以上)。
+    2026-07-25〜08-30の211頭で単勝回収率117.3%(払戻率は80%)。ただし95%区間[64%,179%]＝
     まだ勝てるとは言えない。<b>母数を貯めるための記録対象</b>。人気は現時点のオッズ順＝暫定。</p>` +
-    (ta.length ? ta.map(t=>`<div class="ta" data-jump="${esc(t.place)}">
-      <div class="l1">${numBadge(t.num, null, true)}<b>${esc(t.place)}</b>
-        <span>${esc(t.time||"-")}</span>
-        <span style="margin-left:auto">HS${esc(String(t.rank))}位・${esc(String(t.pop))}人気</span></div>
-      <div class="l2">${esc(t.name||"")}</div>
-      <div class="l3">${esc(String(t.o0))}倍 → <span class="dn">${esc(String(t.o1))}倍</span>
-        （${esc(String(t.pct))}%）</div>
-    </div>`).join("") : `<p class="meta">該当なし</p>`);
+    (ta.length ? `<div class="talist">` + grp.map(g=>`<div class="tag">
+      <div class="tah2" data-jump="${esc(g.place)}"><b>${esc(g.place)}</b>
+        <span>${esc(g.time||"-")}</span>
+        <span style="margin-left:auto">${g.heads?esc(String(g.heads))+"頭":""}</span></div>` +
+      g.rows.map(t=>`<div class="ta" data-jump="${esc(t.place)}">
+        ${numBadge(t.num, t.heads, true)}
+        <span class="nm">${esc(t.name||"")}</span>
+        <span class="hp">HS${esc(String(t.rank))}・${esc(String(t.pop))}人</span>
+        <span class="od">${esc(String(t.o0))}→<b>${esc(String(t.o1))}</b></span>
+        <span class="pc">${esc(String(t.pct))}%</span>
+      </div>`).join("") + `</div>`).join("") + `</div>`
+     : `<p class="meta">該当なし</p>`);
   return taBlock + `<h3 class="tah">オッズ帯の移動</h3>
     <p class="meta">前日初値(白丸)→最新(色丸)のオッズ帯の移動。<br>
     目盛=対数(左端1倍・線は2/10/50/200倍)＝左ほど人気側。毎時更新・数値のみ。</p>
