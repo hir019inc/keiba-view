@@ -79,6 +79,12 @@
   /* 狙い別の行は幅が厳しいので、人気は枠なしの小文字にして馬名に幅を回す */
   .nrow .pop { font-size:11px; padding:0; border:0; flex:0 0 auto; }
   .vchip { min-width:56px; }
+  /* 前回の決着タブの表 */
+  .mx2 { width:100%; border-collapse:collapse; font-size:12.5px; }
+  .mx2 th { font-size:10.5px; color:var(--sub); font-weight:600; text-align:left;
+            padding:3px 5px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  .mx2 td { padding:5px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; }
+  .mx2 tr:last-child td { border-bottom:0; }
   /* TODAYの各行 → P1選定の該当カードへ（ヒートマップのチップと同じ動き） */
   [data-jump] { cursor:pointer; -webkit-tap-highlight-color:rgba(28,69,135,.08); }
   .nrow[data-jump]:active, .mv[data-jump]:active, .al[data-jump]:active,
@@ -249,7 +255,7 @@ const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;
 const inline = t => t.split("<br>").map(x=>esc(x)).join("<br>")
                      .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
 /* ★バージョン表記＝ここだけ書き換える（モデル正典のVerと揃える） */
-const VER = "4.00";
+const VER = "4.01";
 const TABS = [["00_published/P1_TODAY.md","P1選定"],["HEATMAP","ヒートマップ"],["TODAYV4","TODAY"]];
 let state = { ba:"all", tm:"all", ttab:0, doc:TABS[0][0] };
 let lastText = "", lastPath = "", genAt = null, fetchAt = null;
@@ -498,6 +504,7 @@ function gq(g){ return `<span class="gq" style="background:${QCOL[g]||QCOL["-"]}
 function renderTodayJson(d){
   const tabs = [["nerai","狙い別"],["odds","オッズ動向"],
                 ["alerts",`大穴 ${d.alerts.length}頭`],["chokyo","調教"],["agari","上がり上位"]];
+  if (d.prev) tabs.push(["prev","前回の決着"]);
   if (state.ttab >= tabs.length) state.ttab = 0;
   let h = [`<p class="meta">生成 ${esc(d.generated)}・${esc(d.venues.join(" "))} ${d.races}R</p>`];
   h.push(`<div class="seg">` + tabs.map((t,i)=>
@@ -507,6 +514,7 @@ function renderTodayJson(d){
   else if (key==="odds") h.push(renderOddsMoves(d));
   else if (key==="alerts") h.push(renderAlerts(d));
   else if (key==="chokyo") h.push(renderChokyo(d));
+  else if (key==="prev") h.push(renderPrev(d.prev));
   else h.push(renderAgari(d));
   return h.join("");
 }
@@ -607,6 +615,41 @@ function renderChokyo(d){
   h.push(`</div>`);
   return h.join("");
 }
+/* ---------- 前回開催の決着（事実の可視化・結論は書かない） ---------- */
+function renderPrev(p){
+  const yen = n => "¥" + Number(n||0).toLocaleString();
+  let h = [`<p class="meta">${esc(p.date)} の決着 ${p.races}鞍。<b>その日に何が起きたかの事実</b>で、
+    今日を予測するものではありません。</p>`];
+
+  h.push(`<div class="card"><div class="cardh">場別</div>
+    <table class="mx2"><thead><tr><th>場</th><th>鞍</th><th>3連複の中央</th><th>3着内の平均人気</th></tr></thead><tbody>`
+    + p.venues.map(v=>{const [bg,fg]=heat(v.pay_med/100);
+        return `<tr><td>${esc(v.venue)}</td><td>${v.n}</td>
+          <td style="background:${bg};color:${fg};font-weight:700">${yen(v.pay_med)}</td>
+          <td>${v.pop_avg}</td></tr>`;}).join("") + `</tbody></table></div>`);
+
+  if (p.legs && p.legs.length) h.push(`<div class="card"><div class="cardh">決着した脚質（1着馬）</div>
+    <p class="tnote">「前」＝逃げ＋先行。低いほど差し・追込で決まった。</p>
+    <table class="mx2"><thead><tr><th>場・種別</th><th>鞍</th><th>前で決着</th><th>前%</th></tr></thead><tbody>`
+    + p.legs.map(l=>`<tr><td>${esc(l.venue)}${esc(l.sur)}</td><td>${l.n}</td>
+        <td>${l.front}</td><td style="font-weight:700;color:${l.front_pct>=50?"#b8232f":"#0a7a3d"}">
+        ${l.front_pct==null?"-":l.front_pct+"%"}</td></tr>`).join("") + `</tbody></table></div>`);
+
+  h.push(`<div class="card"><div class="cardh">条件別（配当の高い順）</div>
+    <table class="mx2"><thead><tr><th>場・種別・距離</th><th>鞍</th><th>3連複の中央</th></tr></thead><tbody>`
+    + p.cells.map(c=>{const [bg,fg]=heat(c.pay_med/100);
+        return `<tr><td>${esc(c.venue)}${esc(c.sur)} ${esc(c.band)}</td><td>${c.n}</td>
+          <td style="background:${bg};color:${fg};font-weight:700">${yen(c.pay_med)}</td></tr>`;}).join("")
+    + `</tbody></table></div>`);
+
+  h.push(`<div class="card"><div class="cardh">高配当の上位</div>
+    <table class="mx2"><thead><tr><th>場R</th><th>条件</th><th>着順</th><th>人気</th><th>払戻</th></tr></thead><tbody>`
+    + p.top.map(t=>`<tr><td><b>${esc(t.place)}</b></td><td>${esc(t.course)}</td>
+        <td>${esc(t.chaku)}</td><td>${esc(t.pop)}</td>
+        <td style="font-weight:700">${yen(t.pay)}</td></tr>`).join("") + `</tbody></table></div>`);
+  return h.join("");
+}
+
 function renderAgari(d){
   return `<p class="meta">僅差時上がり（着差0.5以内で出した最速3F）の全場上位${d.agari.length}頭</p><div class="card">`
     + d.agari.map((x,i)=>`<div class="agrow" data-jump="${esc(x.place)}"><span class="rk">${i+1}</span>
