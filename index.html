@@ -183,6 +183,8 @@
             background:linear-gradient(90deg,#e3edfb,#f3f5f8 45%,#f3f5f8 55%,#fdeee6); }
   .tkr .g .mid { position:absolute; left:50%; top:1px; width:1px; height:7px;
                  background:var(--line); }
+  /* 平常値→当日 の移動を結ぶバー。色=移動の向き（青=前寄りへ／橙=差し寄りへ） */
+  .tkr .g .seg { position:absolute; top:2.5px; height:4px; border-radius:2px; opacity:.75; }
   .tkr .g .base { position:absolute; top:0px; width:9px; height:9px; border-radius:50%;
                   background:var(--card); border:2px solid #5a6472; margin-left:-4.5px; }
   .tkr .g .now { position:absolute; top:-3px; width:3px; height:15px; border-radius:1.5px;
@@ -317,7 +319,7 @@ const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;
 const inline = t => t.split("<br>").map(x=>esc(x)).join("<br>")
                      .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
 /* ★バージョン表記＝ここだけ書き換える（モデル正典のVerと揃える） */
-const VER = "4.06";
+const VER = "4.07";
 const TABS = [["00_published/P1_TODAY.md","P1選定"],["HEATMAP","ヒートマップ"],["TODAYV4","TODAY"]];
 let state = { ba:"all", tm:"all", ttab:0, doc:TABS[0][0] };
 let lastText = "", lastPath = "", genAt = null, fetchAt = null;
@@ -679,8 +681,16 @@ function renderTenkai(t){
   const row = c => {
     const hasB = c.base != null, hasT = c.today != null;
     const dev = (hasB && hasT) ? (c.today - c.base) : null;
+    // 平常値と当日を結ぶバー。左へ動いた=前寄り(青)／右へ動いた=差し寄り(橙)
+    let seg = "";
+    if (hasB && hasT) {
+      const x0 = +X(c.base), x1 = +X(c.today);
+      const l = Math.min(x0, x1), w = Math.max(1.5, Math.abs(x1 - x0));
+      seg = `<i class="seg" style="left:${l}%;width:${w}%;
+             background:${x1 < x0 ? "#1d4587" : "#c9622a"}"></i>`;
+    }
     const bar = (hasB || hasT) ? `<div class="tkg"><span class="e">前</span>
-      <div class="g"><i class="mid"></i>
+      <div class="g"><i class="mid"></i>${seg}
         ${hasB?`<span class="base" style="left:${X(c.base)}%"></span>`:""}
         ${hasT?`<span class="now" style="left:${X(c.today)}%"></span>`:""}
       </div><span class="e">差</span></div>` : "";
@@ -709,7 +719,8 @@ function renderTenkai(t){
     コース間の幅は71pt（函館ダ1200の78%〜東京芝2300m-の8%）＝ここに情報がある。<br>
     <b>当日の「ズレ」は後続を予測しません</b>（${t.n}鞍で検証・ズレで層別しても後続は±2pt以内）。
     事実の記録として併記しているだけで、これを見て買い方を変える根拠はありません。<br>
-    軸は<b>左=前（逃げ・先行）／右=差し（差し・追込）</b>。○=平常値／│=当日。
+    軸は<b>左=前（逃げ・先行）／右=差し（差し・追込）</b>。○=平常値／│=当日／
+    バー=その移動（青=当日は前寄り／橙=当日は差し寄り）。
     数字は「3着内に前が2頭以上入った鞍の割合」＝<b>前残り率</b>（高いほど前が残る＝左寄り）。<br>
     平常値は${esc(t.asof||"")}時点・全体${(t.overall*100).toFixed(1)}%。</p>` + cards;
 }
