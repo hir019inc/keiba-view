@@ -680,6 +680,9 @@ function renderTenkai(t){
   });
   // 位置は「1 − 前残り率」＝前残りが強いほど左（左=逃げ・先行 / 右=差し・追込）
   const X = v => ((1 - v) * 100).toFixed(1);
+  // ズレの大きさで色を変える。小=グレー / 中=青 / 大=赤（大きいズレを目立たせる）
+  const devCol = d => { const a = Math.abs(d) * 100;
+    return a < 10 ? "#8a93a0" : a < 25 ? "#1d4587" : a < 40 ? "#c26a20" : "#c0201a"; };
   const row = c => {
     const hasB = c.base != null, hasT = c.today != null;
     const dev = (hasB && hasT) ? (c.today - c.base) : null;
@@ -688,8 +691,9 @@ function renderTenkai(t){
     if (hasB && hasT) {
       const x0 = +X(c.base), x1 = +X(c.today);
       const l = Math.min(x0, x1), w = Math.max(1.5, Math.abs(x1 - x0));
+      // 色はズレの大きさ。小=グレー(見なくていい) → 中=青 → 大=赤(目立たせる)
       const a = Math.abs(dev) * 100;
-      const col = a < 10 ? "#c3cedb" : a < 25 ? "#8fb0d6" : a < 40 ? "#4b7bb5" : "#1d4587";
+      const col = a < 10 ? "#c3cedb" : a < 25 ? "#7aa4d8" : a < 40 ? "#e8873d" : "#d93b30";
       seg = `<i class="seg" style="left:${l}%;width:${w}%;background:${col}"></i>`;
     }
     const bar = (hasB || hasT) ? `<div class="tkg"><span class="e">前</span>
@@ -702,7 +706,7 @@ function renderTenkai(t){
       <div class="l1"><span class="d">${esc(c.dist)}</span>
         <span class="v">前残り 平常 <b>${hasB?pct(c.base):"-"}</b></span>
         <span class="v">当日 <b>${hasT?pct(c.today):"未"}</b>${c.fin?`(${c.front}/${c.fin})`:""}</span>
-        ${dev!=null?`<span class="dv" style="color:${dev>=0?"#1d4587":"#8a3b12"}">${
+        ${dev!=null?`<span class="dv" style="color:${devCol(dev)}">${
           dev>=0?"+":""}${(dev*100).toFixed(0)}pt</span>`:""}</div>
       ${bar}
       <div class="rs">${c.races.map(r=>{
@@ -725,7 +729,7 @@ function renderTenkai(t){
     事実の記録として併記しているだけで、これを見て買い方を変える根拠はありません。<br>
     軸は<b>左=前（逃げ・先行）／右=差し（差し・追込）</b>で、<b>目盛は前残り%（左端100・右端0）</b>
     ＝表示している数字の位置に○と│が来ます。○=平常値／│=当日／バー=その移動で、
-    <b>色が濃いほどズレが大きい</b>（薄灰&lt;10pt・薄青&lt;25pt・青&lt;40pt・濃青40pt以上）。
+    <b>色はズレの大きさ</b>（灰&lt;10pt=平常どおり・青&lt;25pt・橙&lt;40pt・<b>赤=40pt以上</b>）。
     数字は「3着内に前が2頭以上入った鞍の割合」＝<b>前残り率</b>（高いほど前が残る＝左寄り）。<br>
     平常値は${esc(t.asof||"")}時点・全体${(t.overall*100).toFixed(1)}%。</p>` + cards;
 }
