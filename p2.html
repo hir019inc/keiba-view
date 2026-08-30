@@ -127,9 +127,11 @@ const KATA={B5:{n:5,ax:0,l:"B5"},B6:{n:6,ax:0,l:"B6"},B7:{n:7,ax:0,l:"B7"},
             F5:{n:6,ax:1,l:"F5"},F6:{n:7,ax:1,l:"F6"},F7:{n:8,ax:1,l:"F7"},
             J2:{n:2,ax:2,l:"2頭軸×ヒモ全"}};
 let PACK=null, SF=null, IDX=null;
-let S={tenkai:"none",kata:"F6",yosan:1500,sel:[],log:[]};
+let S={tenkai:"none",kata:"F6",tanka:100,sel:[],log:[]};
 try{S.log=JSON.parse(localStorage.getItem("derby_kaime")||"[]")}catch(e){}
-const save=()=>{try{localStorage.setItem("derby_kaime",JSON.stringify(S.log))}catch(e){}};
+try{const t=+localStorage.getItem("derby_tanka");if(t>=100)S.tanka=t}catch(e){}
+const save=()=>{try{localStorage.setItem("derby_kaime",JSON.stringify(S.log));
+  localStorage.setItem("derby_tanka",String(S.tanka))}catch(e){}};
 
 const oddsOf=(a,b,c)=>{ if(!SF) return null;
   const k=[a,b,c].map(Number).sort((x,y)=>x-y).join("-"); const v=SF.odds[k];
@@ -187,8 +189,8 @@ function render(){
     <div class="seg">${["F5","F6","F7","J2"].map(k=>
       `<button class="${S.kata===k?"on":""}" onclick="setK('${k}')">${KATA[k].l}</button>`).join("")}</div>
     <div style="display:flex;align-items:center;gap:8px;margin-top:9px">
-      <span class="mini">予算</span><input type="number" step="100" value="${S.yosan}"
-        onchange="S.yosan=+this.value;render()"><span class="mini">円</span></div>
+      <span class="mini">1点あたり</span><input type="number" step="100" min="100" value="${S.tanka}"
+        onchange="S.tanka=Math.max(100,+this.value||100);save();render()"><span class="mini">円</span></div>
   </div>
 
   <div class="card">
@@ -222,7 +224,7 @@ function render(){
   const bar=$("bar");
   if(short){ bar.innerHTML=`<div class="st"><div><div class="k">あと${short}頭</div>
     <div class="v warn">選んでください</div></div></div>`; return; }
-  const n=out.length, unit=Math.max(100,Math.floor(S.yosan/n/100)*100);
+  const n=out.length, unit=Math.max(100,S.tanka||100);
   const os=out.map(c=>oddsOf(...c)).filter(v=>v!=null).sort((a,b)=>a-b);
   const unknown=n-os.length;
   const mid=os.length?os[Math.floor(os.length/2)]:null;
@@ -241,7 +243,7 @@ function setT(k){S.tenkai=k;reset();render();}
 function setK(k){S.kata=k;topup();render();}
 function tap(n){const i=S.sel.indexOf(n);if(i>=0)S.sel.splice(i,1);else S.sel.push(n);render();}
 function keep(){const {out,K}=combos(); if(!out.length)return;
-  const n=out.length, unit=Math.max(100,Math.floor(S.yosan/n/100)*100);
+  const n=out.length, unit=Math.max(100,S.tanka||100);
   S.log.push(`${PACK.venue}${PACK.r}R 3連複 ${K.l} ${S.sel.slice(0,need()).join("-")} ${n}点×${unit}円 展開=${TENKAI.find(t=>t[0]===S.tenkai)[1]}`);
   save();render();}
 function drop(i){S.log.splice(i,1);save();render();}
