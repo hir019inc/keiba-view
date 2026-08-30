@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>D.E.R.B.Y. — HS競馬予想システム</title>
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -45,7 +45,9 @@
   /* 本文(main)と同じ幅に揃える＝PCでヘッダーだけ端まで伸びない。
      .htabs の margin 短縮形より後に置くこと（後勝ちで潰れるため）。 */
   .hrow, .hsub, .htabs { max-width:640px; margin-left:auto; margin-right:auto; }
-  main { padding:10px; max-width:640px; margin:0 auto; }
+  /* 下端はiPhoneの角丸・ホームインジケータに食われるので余白を足す（2026-08-30） */
+  main { padding:10px; padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));
+         max-width:640px; margin:0 auto; }
   .meta { color:var(--sub); font-size:12px; margin:4px 2px 10px; }
   .seg { display:flex; gap:5px; margin:0 0 8px; overflow-x:auto; }
   .seg button { flex:1 0 auto; font-size:12.5px; padding:7px 10px; border:1px solid var(--line);

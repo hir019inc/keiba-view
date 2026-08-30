@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="ja"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>D.E.R.B.Y. P2 予想</title>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <style>
 :root{--bg:#f5f6f8;--card:#fff;--fg:#1a1a1a;--line:#e2e5ea;--accent:#1c4587;--sub:#68707c;--chip:#eef1f6}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,"Hiragino Sans",sans-serif;
-     font-size:14px;padding-bottom:96px}
+     font-size:14px;padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
 header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);padding:7px 10px 6px;z-index:9}
 .hrow{display:flex;gap:8px;align-items:center;max-width:640px;margin:0 auto}
 .silks{display:inline-flex;height:19px;border-radius:3px;overflow:hidden;box-shadow:0 0 0 1px var(--line);flex:0 0 auto}
@@ -43,8 +43,14 @@ main{padding:10px;max-width:640px;margin:0 auto}
 .up{color:#0a7a3d;font-weight:800}.dn{color:#b8232f;font-weight:800}
 input[type=number]{width:110px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;font-size:14px}
 /* --- 下部固定バー --- */
+/* ★iPhoneの角丸・ホームインジケータに食われるので下と左右に安全領域を取る（2026-08-30）。
+   viewport-fit=cover を付けて env(safe-area-inset-*) を有効にしている。
+   fallback付き max() ＝ ノッチ無し端末でも最低14px/12px は空ける。 */
 .bar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid var(--line);
-     padding:8px 10px calc(8px + env(safe-area-inset-bottom));z-index:10;
+     padding-top:9px;
+     padding-bottom:max(14px, env(safe-area-inset-bottom,0px));
+     padding-left:max(12px, env(safe-area-inset-left,0px));
+     padding-right:max(12px, env(safe-area-inset-right,0px));z-index:10;
      box-shadow:0 -2px 10px rgba(0,0,0,.06)}
 .barin{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:9px}
 .st{flex:1;display:flex;gap:11px;flex-wrap:nowrap;overflow:hidden}
