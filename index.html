@@ -89,7 +89,7 @@
   .mx2 tr:last-child td { border-bottom:0; }
   /* TODAYの各行 → P1選定の該当カードへ（ヒートマップのチップと同じ動き） */
   [data-jump] { cursor:pointer; -webkit-tap-highlight-color:rgba(28,69,135,.08); }
-  .nrow[data-jump]:active, .mv[data-jump]:active, .al[data-jump]:active, .ta[data-jump]:active, .tah2[data-jump]:active,
+  .nrow[data-jump]:active, .mv[data-jump]:active, .al[data-jump]:active, .ta[data-jump]:active, .tah2[data-jump]:active, .tk .rs span[data-jump]:active,
   .qrow[data-jump]:active, .agrow[data-jump]:active { background:#f1f5fb; }
   .cardh { font-weight:700; font-size:14.5px; color:var(--accent); margin-bottom:6px; }
   .c1 { display:flex; align-items:baseline; gap:8px; color:var(--sub); font-size:12px;
@@ -161,6 +161,24 @@
   .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .gcol h3 { font-size:12.5px; margin:2px 0 6px; color:var(--sub); font-weight:600; }
   .tah { font-size:13.5px; font-weight:700; margin:14px 0 4px; }
+  /* 展開タブ: 平常値が主役・当日は事実として併記（当日は後続を予測しないと検証済み） */
+  .tk { border:1px solid var(--line); border-radius:10px; background:var(--card);
+        padding:7px 9px; margin-bottom:6px; }
+  .tk .h { display:flex; align-items:baseline; gap:7px; }
+  .tk .h b { font-size:13px; }
+  .tk .h .n { color:var(--sub); font-size:10.5px; margin-left:auto; }
+  .tk .g { position:relative; height:9px; border-radius:5px; background:var(--chip);
+           margin:6px 0 4px; }
+  .tk .g i { position:absolute; top:0; left:0; height:100%; border-radius:5px; }
+  .tk .g u { position:absolute; top:-3px; width:2px; height:15px; background:var(--fg);
+             border-radius:1px; }
+  .tk .l { display:flex; gap:10px; font-size:11px; color:var(--sub); flex-wrap:wrap; }
+  .tk .l b { color:var(--fg); }
+  .tk .rs { display:flex; gap:4px; flex-wrap:wrap; margin-top:5px; }
+  .tk .rs span { font-size:10.5px; padding:1px 5px; border-radius:4px;
+                 background:var(--chip); color:var(--sub); }
+  .tk .rs span.f { background:#e3edfb; color:#1d4587; font-weight:600; }
+  .tk .rs span.b { background:#fdeee6; color:#8a3b12; font-weight:600; }
   .tah:first-child { margin-top:2px; }
   .mv { background:var(--card); border:1px solid var(--line); border-radius:10px;
         padding:7px 8px; margin-bottom:6px; }
@@ -286,7 +304,7 @@ const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;
 const inline = t => t.split("<br>").map(x=>esc(x)).join("<br>")
                      .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
 /* ★バージョン表記＝ここだけ書き換える（モデル正典のVerと揃える） */
-const VER = "4.02";
+const VER = "4.03";
 const TABS = [["00_published/P1_TODAY.md","P1選定"],["HEATMAP","ヒートマップ"],["TODAYV4","TODAY"]];
 let state = { ba:"all", tm:"all", ttab:0, doc:TABS[0][0] };
 let lastText = "", lastPath = "", genAt = null, fetchAt = null;
@@ -547,6 +565,7 @@ function gq(g){ return `<span class="gq" style="background:${QCOL[g]||QCOL["-"]}
 function renderTodayJson(d){
   const tabs = [["nerai","狙い別"],["odds","オッズ動向"],
                 ["alerts",`大穴 ${d.alerts.length}頭`],["chokyo","調教"],["agari","上がり上位"]];
+  if (d.tenkai) tabs.splice(2, 0, ["tenkai","展開"]);
   if (d.prev) tabs.push(["prev","前回の決着"]);
   if (state.ttab >= tabs.length) state.ttab = 0;
   let h = [`<p class="meta">生成 ${esc(d.generated)}・${esc(d.venues.join(" "))} ${d.races}R</p>`];
@@ -555,6 +574,7 @@ function renderTodayJson(d){
   const key = tabs[state.ttab][0];
   if (key==="nerai") h.push(renderNerai(d));
   else if (key==="odds") h.push(renderOddsMoves(d));
+  else if (key==="tenkai") h.push(renderTenkai(d.tenkai));
   else if (key==="alerts") h.push(renderAlerts(d));
   else if (key==="chokyo") h.push(renderChokyo(d));
   else if (key==="prev") h.push(renderPrev(d.prev));
@@ -628,6 +648,37 @@ function renderOddsMoves(d){
     <div class="grid2">${col("オッズ低下(左へ)", d.odds.down, "#1d6fd6")}
     ${col("オッズ上昇(右へ)", d.odds.up, "#f28c28")}</div>`;
 }
+function renderTenkai(t){
+  // 平常値=正（コース間の幅は71pt）。当日=事実の記録で、後続の予測材料ではない（検証済み・±2pt）。
+  const pct = v => (v*100).toFixed(0) + "%";
+  const rows = t.courses.map(c=>{
+    const hasB = c.base != null, hasT = c.today != null;
+    const bar = hasB ? `<div class="g"><i style="width:${(c.base*100).toFixed(0)}%;
+        background:${c.base>=.5?"#e8a33d":"#7aa4d8"}"></i>${
+        hasT?`<u style="left:calc(${(c.today*100).toFixed(0)}% - 1px)"></u>`:""}</div>` : "";
+    const dev = (hasB&&hasT) ? (c.today-c.base) : null;
+    return `<div class="tk">
+      <div class="h"><b>${esc(c.label)}</b>
+        <span class="n">${hasB?`平常の母数 ${c.base_n}鞍`:"平常値なし(母数不足)"}</span></div>
+      ${bar}
+      <div class="l">
+        <span>平常 <b>${hasB?pct(c.base):"-"}</b></span>
+        <span>当日 <b>${hasT?pct(c.today):"未"}</b>${c.fin?`（${c.front}/${c.fin}鞍）`:""}</span>
+        ${dev!=null?`<span>ズレ <b>${dev>=0?"+":""}${(dev*100).toFixed(0)}pt</b></span>`:""}
+      </div>
+      <div class="rs">${c.races.map(r=>{
+        const k = r.nfront==null ? "" : (r.nfront>=2 ? "f" : "b");
+        const lab = r.nfront==null ? "未" : (r.nfront>=2 ? "前" : "差");
+        return `<span class="${k}" data-jump="${esc(r.place)}">${esc(r.place)} ${lab}</span>`;
+      }).join("")}</div>
+    </div>`;}).join("");
+  return `<p class="meta"><b>平常値が読みの土台</b>。決着＝3着内3頭のうち逃げ・先行が2頭以上なら「前」。
+    コース間の幅は71pt（函館ダ1200の78%〜東京芝2300m-の8%）＝ここに情報がある。<br>
+    <b>当日の「ズレ」は後続を予測しません</b>（${t.n}鞍で検証・ズレで層別しても後続は±2pt以内）。
+    事実の記録として併記しているだけで、これを見て買い方を変える根拠はありません。<br>
+    棒=平常値／縦線=当日。平常値は${esc(t.asof||"")}時点・全体${(t.overall*100).toFixed(1)}%。</p>` + rows;
+}
+
 const ASORT = [["rank","HS位順"],["time","発走順"],["pop","人気薄順"]];
 const AQ = [["all","全て"],["ab","調A・B"],["a","調Aのみ"]];
 function renderAlerts(d){
