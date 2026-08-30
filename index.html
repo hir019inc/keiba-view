@@ -176,11 +176,17 @@
   .tkr .l1 .v { color:var(--sub); }
   .tkr .l1 .v b { color:var(--fg); }
   .tkr .l1 .dv { margin-left:auto; font-weight:700; font-variant-numeric:tabular-nums; }
-  .tkr .g { position:relative; height:7px; border-radius:4px; background:var(--chip);
-            margin:4px 0 3px; }
-  .tkr .g i { position:absolute; top:0; left:0; height:100%; border-radius:4px; }
-  .tkr .g u { position:absolute; top:-3px; width:2px; height:13px; background:var(--fg);
-              border-radius:1px; }
+  /* 軸は 左=前(逃げ・先行) → 右=差し。前残り率が高いほど左に来る（位置 = 1 - 前残り率） */
+  .tkg { display:flex; align-items:center; gap:5px; margin:5px 0 4px; }
+  .tkg .e { font-size:9.5px; color:var(--sub); width:14px; text-align:center; flex:none; }
+  .tkr .g { position:relative; flex:1; height:9px; border-radius:5px;
+            background:linear-gradient(90deg,#e3edfb,#f3f5f8 45%,#f3f5f8 55%,#fdeee6); }
+  .tkr .g .mid { position:absolute; left:50%; top:1px; width:1px; height:7px;
+                 background:var(--line); }
+  .tkr .g .base { position:absolute; top:0px; width:9px; height:9px; border-radius:50%;
+                  background:var(--card); border:2px solid #5a6472; margin-left:-4.5px; }
+  .tkr .g .now { position:absolute; top:-3px; width:3px; height:15px; border-radius:1.5px;
+                 background:#1d4587; margin-left:-1.5px; }
   .tkr .rs { display:flex; gap:4px; flex-wrap:wrap; }
   .tkr .rs span { font-size:10.5px; padding:1px 5px; border-radius:4px;
                   background:var(--chip); color:var(--sub); }
@@ -311,7 +317,7 @@ const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;
 const inline = t => t.split("<br>").map(x=>esc(x)).join("<br>")
                      .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
 /* ★バージョン表記＝ここだけ書き換える（モデル正典のVerと揃える） */
-const VER = "4.04";
+const VER = "4.05";
 const TABS = [["00_published/P1_TODAY.md","P1選定"],["HEATMAP","ヒートマップ"],["TODAYV4","TODAY"]];
 let state = { ba:"all", tm:"all", ttab:0, doc:TABS[0][0] };
 let lastText = "", lastPath = "", genAt = null, fetchAt = null;
@@ -668,17 +674,21 @@ function renderTenkai(t){
     if (!m.has(c.surf)) m.set(c.surf, []);
     m.get(c.surf).push(c);
   });
+  // 位置は「1 − 前残り率」＝前残りが強いほど左（左=逃げ・先行 / 右=差し・追込）
+  const X = v => ((1 - v) * 100).toFixed(1);
   const row = c => {
     const hasB = c.base != null, hasT = c.today != null;
     const dev = (hasB && hasT) ? (c.today - c.base) : null;
-    const bar = hasB ? `<div class="g"><i style="width:${(c.base*100).toFixed(0)}%;
-        background:${c.base>=.5?"#e8a33d":"#7aa4d8"}"></i>${
-        hasT?`<u style="left:calc(${(c.today*100).toFixed(0)}% - 1px)"></u>`:""}</div>` : "";
+    const bar = (hasB || hasT) ? `<div class="tkg"><span class="e">前</span>
+      <div class="g"><i class="mid"></i>
+        ${hasB?`<span class="base" style="left:${X(c.base)}%"></span>`:""}
+        ${hasT?`<span class="now" style="left:${X(c.today)}%"></span>`:""}
+      </div><span class="e">差</span></div>` : "";
     return `<div class="tkr">
       <div class="l1"><span class="d">${esc(c.dist)}</span>
-        <span class="v">平常 <b>${hasB?pct(c.base):"-"}</b></span>
+        <span class="v">前残り 平常 <b>${hasB?pct(c.base):"-"}</b></span>
         <span class="v">当日 <b>${hasT?pct(c.today):"未"}</b>${c.fin?`(${c.front}/${c.fin})`:""}</span>
-        ${dev!=null?`<span class="dv" style="color:${dev>=0?"#8a3b12":"#1d4587"}">${
+        ${dev!=null?`<span class="dv" style="color:${dev>=0?"#1d4587":"#8a3b12"}">${
           dev>=0?"+":""}${(dev*100).toFixed(0)}pt</span>`:""}</div>
       ${bar}
       <div class="rs">${c.races.map(r=>{
@@ -699,7 +709,9 @@ function renderTenkai(t){
     コース間の幅は71pt（函館ダ1200の78%〜東京芝2300m-の8%）＝ここに情報がある。<br>
     <b>当日の「ズレ」は後続を予測しません</b>（${t.n}鞍で検証・ズレで層別しても後続は±2pt以内）。
     事実の記録として併記しているだけで、これを見て買い方を変える根拠はありません。<br>
-    棒=平常値／縦線=当日。平常値は${esc(t.asof||"")}時点・全体${(t.overall*100).toFixed(1)}%。</p>` + cards;
+    軸は<b>左=前（逃げ・先行）／右=差し（差し・追込）</b>。○=平常値／│=当日。
+    数字は「3着内に前が2頭以上入った鞍の割合」＝<b>前残り率</b>（高いほど前が残る＝左寄り）。<br>
+    平常値は${esc(t.asof||"")}時点・全体${(t.overall*100).toFixed(1)}%。</p>` + cards;
 }
 
 const ASORT = [["rank","HS位順"],["time","発走順"],["pop","人気薄順"]];
