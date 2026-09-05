@@ -331,7 +331,7 @@ const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;
 const inline = t => t.split("<br>").map(x=>esc(x)).join("<br>")
                      .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
 /* ★バージョン表記＝ここだけ書き換える（モデル正典のVerと揃える） */
-const VER = "4.8.0";
+const VER = "4.8.1";
 const TABS = [["00_published/P1_TODAY.md","P1選定"],["HEATMAP","ヒートマップ"],["TODAYV4","TODAY"]];
 let state = { ba:"all", tm:"all", ttab:0, doc:TABS[0][0] };
 let lastText = "", lastPath = "", genAt = null, fetchAt = null;
@@ -674,7 +674,7 @@ function renderOddsMoves(d){
         <span class="oolab">${i===0?"穴":""}</span>
         ${numBadge(o.num, t.heads, true)}
         <span class="oonm">${esc(o.name||"")}</span>
-        <span class="oohp">${esc(String(o.pop))}人${
+        <span class="oohp">HS${esc(String(o.rank))}・${esc(String(o.pop))}人${
           o.qual&&o.qual!=="-"?"・調"+esc(o.qual):""}</span>
       </div>`).join("")
       ).join("") + `</div>`).join("") + `</div>`
