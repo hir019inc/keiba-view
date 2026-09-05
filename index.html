@@ -109,6 +109,9 @@
   .pays { display:flex; gap:6px; flex:1; }
   /* 配当は2行（F6=実際に買う形 / B7=軸なしBOX）。2026-08-30 */
   .payrow { display:flex; align-items:center; gap:6px; margin-top:4px; }
+  /* F6の配当が薄い鞍の印（2026-09-05）。見送り判断の材料 */
+  .paylb.thin { background:#7a2e00; color:#fff; }
+  .thinm { font-style:normal; margin-left:3px; font-size:9px; }
   .paylb { font-size:9.5px; font-weight:800; color:var(--accent); width:17px; flex:0 0 auto;
            text-align:right; letter-spacing:-.02em; }
   .paylb.b { color:#9aa1ab; }
@@ -338,7 +341,7 @@ const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;
 const inline = t => t.split("<br>").map(x=>esc(x)).join("<br>")
                      .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
 /* ★バージョン表記＝ここだけ書き換える（モデル正典のVerと揃える） */
-const VER = "4.9.0";
+const VER = "4.10.0";
 const TABS = [["00_published/P1_TODAY.md","P1選定"],["HEATMAP","ヒートマップ"],["TODAYV4","TODAY"]];
 let state = { ba:"all", tm:"all", ttab:0, doc:TABS[0][0] };
 let lastText = "", lastPath = "", genAt = null, fetchAt = null;
@@ -364,6 +367,16 @@ function numBadge(num, heads, small){
   const w = waku(num, heads);
   const [bg, fg, bd] = WAKU[w] || ["var(--accent)","#fff","transparent"];
   return `<span class="num${small?" s":""}" style="background:${bg};color:${fg};border-color:${bd}">${esc(String(num))}</span>`;
+}
+
+/* F6で当たっても薄い鞍か（★2026-09-05）。
+   F6=15点=1,500円なので、配当30倍(3,000円)以下だと的中しても取り分が小さい。
+   8,534鞍の実測: 全体の37.2%が30倍以下だが、頭数と1番人気オッズで11%〜81%まで割れる
+     10頭未満x1番人気1.7倍未満 81% / 16頭以上x1番人気4倍以上 9%
+   ここでは結果でなく「中央（実際に当たる代表値）」が30倍以下かで印を出す＝買う前に分かる。 */
+function thinF6(r){
+  const mid = parseFloat((r.pay||[])[2]);
+  return !isNaN(mid) && mid <= 30;
 }
 
 /* ---------- 配当の色分け（倍率の大きさ・単色系グラデ） ---------- */
@@ -418,7 +431,7 @@ function renderP1(md){
     `<button data-f="ba:${b}" class="${state.ba===b?"on":""}">${b==="all"?"全場":esc(b)}</button>`).join("") + `</div>`);
   h.push(`<div class="seg">` + TM.map(([k,l]) =>
     `<button data-f="tm:${k}" class="${state.tm===k?"on":""}">${l}</button>`).join("") + `</div>`);
-  h.push(`<p class="meta" style="margin:0 2px 8px">配当＝左から 最低/低/中/高（倍）。
+  h.push(`<p class="meta" style="margin:0 2px 8px">配当＝左から 最低/低/中/高（倍）。<b>薄</b>＝中央が30倍以下＝F6(15点)では当たっても取り分が小さい。
     <b>F6</b>=軸1×相手6の15点（実際に買う形）／<b>B7</b>=HS上位7頭BOX35点。
     床が点数（F6は15）を下回る鞍は人気サイドの決着でトリガミ。</p>`);
   let shown = 0;
@@ -437,7 +450,8 @@ function renderP1(md){
       <div class="c3"><span>オッズ <b>${esc(r.odds)}</b></span>
         <span>HS <b>${esc(r.hs)}</b></span>
         <span class="aite">相手 ${(r.aite||[]).map(n=>numBadge(n, r.heads, true)).join("")}</span></div>
-      <div class="payrow"><span class="paylb">F6</span>
+      <div class="payrow"><span class="paylb${thinF6(r)?" thin":""}">F6${
+        thinF6(r)?'<i class="thinm">薄</i>':""}</span>
         <div class="pays">${r.pay.map(v=>heatCell(v,"pay")).join("")}</div></div>
       <div class="payrow"><span class="paylb b">B7</span>
         <div class="pays">${r.payB.map(v=>heatCell(v,"pay")).join("")}</div></div>
