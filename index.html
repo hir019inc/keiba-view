@@ -211,7 +211,7 @@
   .tah2 { display:flex; align-items:center; gap:6px; padding:4px 8px;
           background:var(--chip); font-size:11.5px; color:var(--sub); }
   .tah2 b { color:var(--fg); font-size:12.5px; }
-  .ta { display:grid; grid-template-columns:auto minmax(0,1fr) auto auto auto;
+  .ta { display:grid; grid-template-columns:auto minmax(0,1fr) auto auto auto auto;
         align-items:center; gap:5px; padding:4px 8px; font-size:12px;
         border-top:1px solid var(--line); }
   .tag .ta:first-of-type { border-top:0; }
@@ -232,13 +232,14 @@
                 overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
   .taoo .oohp { font-size:11px; color:var(--sub); white-space:nowrap;
                 font-variant-numeric:tabular-nums; }
-  /* 単勝アラートから外れた馬（2026-09-05）。黙って消えると人が判断できないので理由を残す */
+  /* 単勝アラートの対象外になった馬（2026-09-05）。黙って消えると人が判断できないので理由を残す */
   .taout { font-size:10.5px; font-weight:400; color:var(--sub); margin-left:7px; }
   .ta.gone { opacity:.5; }
   .taway { display:flex; align-items:center; gap:6px; padding:0 8px 5px 30px; }
   .taway .awlb { font-size:10px; color:#fff; background:var(--sub); border-radius:4px;
                  padding:1px 5px; white-space:nowrap; }
   .taway .awtx { font-size:10.5px; color:var(--sub); }
+  .ta .tasince { font-size:10px; color:var(--sub); white-space:nowrap; }
   .ta .pc { font-variant-numeric:tabular-nums; font-weight:700; color:#1d6fd6;
             font-size:11.5px; min-width:36px; text-align:right; }
   .mv .l1 { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--sub); }
@@ -341,7 +342,7 @@ const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;
 const inline = t => t.split("<br>").map(x=>esc(x)).join("<br>")
                      .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
 /* ★バージョン表記＝ここだけ書き換える（モデル正典のVerと揃える） */
-const VER = "4.12.0";
+const VER = "4.12.1";
 const TABS = [["00_published/P1_TODAY.md","P1選定"],["HEATMAP","ヒートマップ"],["TODAYV4","TODAY"]];
 let state = { ba:"all", tm:"all", ttab:0, doc:TABS[0][0] };
 let lastText = "", lastPath = "", genAt = null, fetchAt = null;
@@ -675,10 +676,10 @@ function renderOddsMoves(d){
     else grp.push({place:t.place, time:t.time, heads:t.heads, rows:[t]});
   });
   const taIn=ta.filter(t=>t.status!=="out"), taOut=ta.filter(t=>t.status==="out");
-  const taBlock = `<h3 class="tah">単勝アラート ${taIn.length}頭${taOut.length?`<span class="taout">ほか外れた ${taOut.length}頭</span>`:""}</h3>
+  const taBlock = `<h3 class="tah">単勝アラート ${taIn.length}頭${taOut.length?`<span class="taout">ほか対象外 ${taOut.length}頭</span>`:""}</h3>
     <p class="meta">HS8位以下 × 現在4-6番人気 × <b>当日朝から</b>オッズが5%以上下がった馬。
     「穴」＝同じ鞍の大穴アラート(HS7位以内×8番人気以下)。<br>
-    薄い行＝いったん該当したが今は外れた馬（人気は他馬の動きでも入れ替わるため、理由を残す）。</p>` +
+    薄い行＝いったん該当したが今は対象外の馬（人気は他馬の動きでも入れ替わるため、理由を残す）。</p>` +
     (ta.length ? `<div class="talist">` + grp.map(g=>`<div class="tag">
       <div class="tah2" data-jump="${esc(g.place)}"><b>${esc(g.place)}</b>
         <span>${esc(g.time||"-")}</span>
@@ -690,9 +691,10 @@ function renderOddsMoves(d){
           t.qual&&t.qual!=="-"?"・調"+esc(t.qual):""}</span>
         <span class="od">${esc(String(t.o0))}→<b>${esc(String(t.o1))}</b></span>
         <span class="pc">${esc(String(t.pct))}%</span>
+        ${t.status!=="out"&&t.changed?`<span class="tasince">${esc(t.changed)} 対象入</span>`:""}
       </div>` + (t.status==="out"?`<div class="taway" data-jump="${esc(t.place)}">
-        <span class="awlb">外れた</span><span class="awtx">${esc(t.reason||"")}
-        （該当 ${esc(t.since||"")}-${esc(t.until||"")}）</span></div>`:"") + (t.ooana||[]).slice(0,4).map((o,i)=>`<div class="taoo" data-jump="${esc(t.place)}">
+        <span class="awlb">対象外</span><span class="awtx">${esc(t.reason||"")}${
+        t.changed?`（${esc(t.changed)}時点）`:""}</span></div>`:"") + (t.status==="out"?[]:(t.ooana||[]).slice(0,4)).map((o,i)=>`<div class="taoo" data-jump="${esc(t.place)}">
         <span class="oolab">${i===0?"穴":""}</span>
         ${numBadge(o.num, t.heads, true)}
         <span class="oonm">${esc(o.name||"")}</span>
