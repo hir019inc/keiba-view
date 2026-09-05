@@ -147,7 +147,10 @@ const KATA={B5:{n:5,ax:0,l:"B5"},B6:{n:6,ax:0,l:"B6"},B7:{n:7,ax:0,l:"B7"},
             F5:{n:6,ax:1,l:"F5"},F6:{n:7,ax:1,l:"F6"},F7:{n:8,ax:1,l:"F7"},
             J2:{n:2,ax:2,l:"2頭軸×ヒモ全"}};
 let PACK=null, SF=null, IDX=null;
-let S={tenkai:"none",tekisei:false,kata:"F6",tanka:100,sel:[],log:[]};
+/* ken: 券種（★2026-09-05追加）。tan/fuku は軸1頭だけを選ぶ＝点数の概念が無い。 */
+let S={tenkai:"none",tekisei:false,ken:"sanrenpuku",kata:"F6",tanka:100,sel:[],log:[]};
+const KEN=[["sanrenpuku","3連複"],["tan","単勝"],["fuku","複勝"]];
+const isTanpuku=()=>S.ken==="tan"||S.ken==="fuku";
 try{S.log=JSON.parse(localStorage.getItem("derby_kaime")||"[]")}catch(e){}
 try{const t=+localStorage.getItem("derby_tanka");if(t>=100)S.tanka=t}catch(e){}
 const save=()=>{try{localStorage.setItem("derby_kaime",JSON.stringify(S.log));
@@ -224,6 +227,11 @@ function midOdds(){
   return os.length?os[Math.floor(os.length/2)]:null;
 }
 
+function setKen(k){
+  S.ken=k;
+  /* 単勝/複勝は軸1頭だけ＝選択を軸へ寄せる。3連複へ戻したら型に応じて選び直す。 */
+  reset(); render();
+}
 function setTeki(){
   S.tekisei=!S.tekisei;
   /* ★穴x適性重視ONではF型(軸1頭固定)を使わせない（2026-09-05）。
@@ -233,7 +241,7 @@ function setTeki(){
   if(S.tekisei && ["F5","F6","F7"].includes(S.kata)) S.kata="B7";
   reset();render();
 }
-const need=()=>{const K=KATA[S.kata];return K.ax===2?2:K.n;};
+const need=()=>{if(isTanpuku())return 1;const K=KATA[S.kata];return K.ax===2?2:K.n;};
 function reset(){ S.sel=auto().slice(0,need()).map(h=>h.num); }
 function topup(){ for(const h of auto()){ if(S.sel.length>=need())break;
   if(!S.sel.includes(h.num)) S.sel.push(h.num); } }
@@ -241,6 +249,7 @@ function topup(){ for(const h of auto()){ if(S.sel.length>=need())break;
 function combos(){
   const K=KATA[S.kata], use=S.sel.slice(0,need()), out=[];
   if(S.sel.length<need()) return {out:[],K,short:need()-S.sel.length};
+  if(isTanpuku()) return {out:[[use[0]]],K,short:0};   /* 1点＝軸1頭 */
   if(K.ax===0){ for(let i=0;i<use.length;i++)for(let j=i+1;j<use.length;j++)for(let k=j+1;k<use.length;k++)
                   out.push([use[i],use[j],use[k]]); }
   else if(K.ax===1){ const a=use[0],r=use.slice(1);
@@ -277,7 +286,11 @@ function render(){
   <div class="card"><div class="hd">買い方</div>
     ${(()=>{const k=kenshuHint(); return k?`<div class="khint">
       <span class="kk">${esc(k.k)}向き</span><span class="kw">${esc(k.why)}</span></div>`:"";})()}
-    <div class="lb">BOX</div>
+    <div class="lb">券種</div>
+    <div class="seg">${KEN.map(([k,l])=>
+      `<button class="${S.ken===k?"on":""}" onclick="setKen('${k}')">${l}</button>`).join("")}</div>
+    ${isTanpuku()?`<div class="note" style="margin-top:8px">軸1頭を選びます。下の馬をタップで変更。</div>`:`
+    <div class="lb" style="margin-top:8px">BOX</div>
     <div class="seg">${["B5","B6","B7"].map(k=>
       `<button class="${S.kata===k?"on":""}" onclick="setK('${k}')">${k}</button>`).join("")}</div>
     <div class="lb" style="margin-top:8px">フォーメーション${
@@ -285,7 +298,7 @@ function render(){
     <div class="seg">${["F5","F6","F7","J2"].map(k=>{
       const no = S.tekisei && ["F5","F6","F7"].includes(k);
       return `<button class="${S.kata===k?"on":""}" onclick="setK('${k}')"
-        ${no?"disabled":""}>${KATA[k].l}</button>`;}).join("")}</div>
+        ${no?"disabled":""}>${KATA[k].l}</button>`;}).join("")}</div>`}
     <div style="display:flex;align-items:center;gap:8px;margin-top:9px">
       <span class="mini">1点あたり</span><input type="number" step="100" min="100" value="${S.tanka}"
         onchange="S.tanka=Math.max(100,+this.value||100);save();render()"><span class="mini">円</span></div>
@@ -315,7 +328,7 @@ function render(){
     <button class="copyall" onclick="copyAll()">まとめてコピー</button>
     <div class="note">鞍をまたいで貯まります。Macの振り返りへ貼り付け・判定はMac側。</div></div>`:""}
 
-  ${out.length?`<div class="card"><details><summary>買い目 ${out.length}点を見る</summary>
+  ${(out.length&&!isTanpuku())?`<div class="card"><details><summary>買い目 ${out.length}点を見る</summary>
     <table class="k">${out.map(c=>({c,o:oddsOf(...c)})).sort((a,b)=>(a.o??1e9)-(b.o??1e9)).map(x=>
       `<tr><td>${x.c.join(" - ")}</td><td>${x.o==null?'<span class="unk">不明</span>':x.o+"倍"}</td></tr>`
     ).join("")}</table></details></div>`:""}`;
@@ -324,6 +337,17 @@ function render(){
   if(short){ bar.innerHTML=`<div class="st"><div><div class="k">あと${short}頭</div>
     <div class="v warn">選んでください</div></div></div>`; fitBottom(); return; }
   const n=out.length, unit=Math.max(100,S.tanka||100);
+  if(isTanpuku()){
+    const h=(PACK.horses||[]).find(x=>x.num===S.sel[0]);
+    const kl=KEN.find(k=>k[0]===S.ken)[1];
+    bar.innerHTML=`<div class="st">
+      <div><div class="k">券種</div><div class="v">${esc(kl)}</div></div>
+      <div><div class="k">馬</div><div class="v">${esc(String(S.sel[0]||"-"))}番</div></div>
+      <div><div class="k">投資</div><div class="v">${unit.toLocaleString()}</div></div>
+      ${h&&h.odds?`<div><div class="k">単勝オッズ</div><div class="v">${esc(String(h.odds))}</div></div>`:""}
+    </div><button class="keep" onclick="keep()">買った</button>`;
+    fitBottom(); return;
+  }
   const os=out.map(c=>oddsOf(...c)).filter(v=>v!=null).sort((a,b)=>a-b);
   const unknown=n-os.length;
   const mid=os.length?os[Math.floor(os.length/2)]:null;
@@ -359,7 +383,11 @@ function setK(k){
 function tap(n){const i=S.sel.indexOf(n);if(i>=0)S.sel.splice(i,1);else S.sel.push(n);render();}
 function keep(){const {out,K}=combos(); if(!out.length)return;
   const n=out.length, unit=Math.max(100,S.tanka||100);
-  S.log.push(`${PACK.venue}${PACK.r}R 3連複 ${K.l} ${S.sel.slice(0,need()).join("-")} ${n}点×${unit}円 `
+  const kl=KEN.find(k=>k[0]===S.ken)[1];
+  const body = isTanpuku()
+    ? `${S.sel[0]}番 ${unit.toLocaleString()}円`
+    : `${K.l} ${S.sel.slice(0,need()).join("-")} ${n}点×${unit}円`;
+  S.log.push(`${PACK.venue}${PACK.r}R ${kl} ${body} `
     +`展開=${TENKAI.find(t=>t[0]===S.tenkai)[1]}${S.tekisei?";穴x適性重視=ON":""}`);
   save();render();}
 function drop(i){S.log.splice(i,1);save();render();}
