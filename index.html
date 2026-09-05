@@ -219,14 +219,16 @@
   .ta .od { font-variant-numeric:tabular-nums; white-space:nowrap; font-size:11px;
             color:var(--sub); }
   .ta .od b { color:#1d6fd6; }
-  /* 同鞍の大穴アラート（単勝アラート馬の下にぶら下げる。向きが逆の2頭を並べて見るため） */
-  .taoo { display:flex; align-items:center; flex-wrap:wrap; gap:4px 6px;
-          padding:2px 8px 6px 30px; border-top:0; }
-  .taoo .oolab { font-size:10px; color:var(--sub); background:var(--bg);
-                 border:1px solid var(--line); border-radius:4px; padding:1px 4px; }
-  .taoo .oo { display:inline-flex; align-items:center; gap:3px; }
-  .taoo .oonm { font-size:11px; font-weight:600; }
-  .taoo .oohp { font-size:10px; color:var(--sub); white-space:nowrap; }
+  /* 同鞍の大穴（単勝アラート馬の下に1頭1行でぶら下げる。向きが逆の2頭を並べて見るため）。
+     ★列は上の .ta と揃える＝馬番/馬名/人気が縦にきれいに通る。 */
+  .taoo { display:grid; grid-template-columns:14px auto minmax(0,1fr) auto;
+          align-items:center; gap:5px; padding:2px 8px 2px 8px; font-size:12px; }
+  .taoo:last-of-type { padding-bottom:5px; }
+  .taoo .oolab { font-size:10px; color:var(--sub); text-align:center; line-height:1; }
+  .taoo .oonm { font-weight:600; font-size:11.5px; color:var(--sub);
+                overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .taoo .oohp { font-size:11px; color:var(--sub); white-space:nowrap;
+                font-variant-numeric:tabular-nums; }
   .ta .pc { font-variant-numeric:tabular-nums; font-weight:700; color:#1d6fd6;
             font-size:11.5px; min-width:36px; text-align:right; }
   .mv .l1 { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--sub); }
@@ -329,7 +331,7 @@ const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;
 const inline = t => t.split("<br>").map(x=>esc(x)).join("<br>")
                      .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
 /* ★バージョン表記＝ここだけ書き換える（モデル正典のVerと揃える） */
-const VER = "4.7.0";
+const VER = "4.7.1";
 const TABS = [["00_published/P1_TODAY.md","P1選定"],["HEATMAP","ヒートマップ"],["TODAYV4","TODAY"]];
 let state = { ba:"all", tm:"all", ttab:0, doc:TABS[0][0] };
 let lastText = "", lastPath = "", genAt = null, fetchAt = null;
@@ -656,9 +658,8 @@ function renderOddsMoves(d){
     2026-07-25〜08-30の12開催日・85頭で単勝回収率154.7%・3着内32.9%(単勝の払戻率は80%/
     動きを見ない同じ帯は67.5%)。ただし95%区間[59%,250%]＝まだ勝てるとは言えない。
     <b>母数を貯めるための記録対象</b>。人気は現時点のオッズ順＝暫定。<br>
-    同じ鞍に大穴アラート(HS7位以内×8番人気以下)がいる場合は下にぶら下げる＝
-    <b>向きが逆の2頭</b>(市場が買っているHS下位馬 / 市場が見ていないHS上位馬)。
-    組み合わせを見るための材料で、買え指示ではない。</p>` +
+    下の「穴」＝同じ鞍の大穴アラート(HS7位以内×8番人気以下)＝<b>向きが逆の馬</b>
+    (上=市場が買っているHS下位馬 / 下=市場が見ていないHS上位馬)。組み合わせを見るための材料。</p>` +
     (ta.length ? `<div class="talist">` + grp.map(g=>`<div class="tag">
       <div class="tah2" data-jump="${esc(g.place)}"><b>${esc(g.place)}</b>
         <span>${esc(g.time||"-")}</span>
@@ -669,11 +670,12 @@ function renderOddsMoves(d){
         <span class="hp">HS${esc(String(t.rank))}・${esc(String(t.pop))}人</span>
         <span class="od">${esc(String(t.o0))}→<b>${esc(String(t.o1))}</b></span>
         <span class="pc">${esc(String(t.pct))}%</span>
-      </div>` + ((t.ooana||[]).length ? `<div class="taoo" data-jump="${esc(t.place)}">
-        <span class="oolab">同鞍の大穴</span>` +
-        t.ooana.slice(0,4).map(o=>`<span class="oo">${numBadge(o.num, t.heads, true)}<span
-          class="oonm">${esc(o.name||"")}</span><span class="oohp">HS${esc(String(o.rank))}位
-          ・${esc(String(o.pop))}人</span></span>`).join("") + `</div>` : "")
+      </div>` + (t.ooana||[]).slice(0,4).map((o,i)=>`<div class="taoo" data-jump="${esc(t.place)}">
+        <span class="oolab">${i===0?"穴":""}</span>
+        ${numBadge(o.num, t.heads, true)}
+        <span class="oonm">${esc(o.name||"")}</span>
+        <span class="oohp">${esc(String(o.pop))}人</span>
+      </div>`).join("")
       ).join("") + `</div>`).join("") + `</div>`
      : `<p class="meta">該当なし</p>`);
   return taBlock + `<h3 class="tah">オッズ帯の移動</h3>
