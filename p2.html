@@ -54,6 +54,8 @@ input[type=number]{width:110px;padding:6px 9px;border:1px solid var(--line);bord
 .tkbtn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .tkbtn:disabled{opacity:.4}
 .tkm{margin-left:5px;color:var(--accent);font-size:10.5px;font-weight:700}
+.lbno{font-size:10px;color:var(--sub);font-weight:400;margin-left:6px}
+.seg button:disabled{opacity:.35}
 /* --- 下部固定バー --- */
 /* ★iPhoneの角丸・ホームインジケータに食われるので下と左右に安全領域を取る（2026-08-30）。
    viewport-fit=cover を付けて env(safe-area-inset-*) を有効にしている。
@@ -182,7 +184,15 @@ function auto(){
       return {...h,sc,moved:Math.abs(sc+h.hsr)>.01?(sc+h.hsr>0?1:-1):0};
     }).sort((a,b)=>b.sc-a.sc);
 }
-function setTeki(){S.tekisei=!S.tekisei;reset();render();}
+function setTeki(){
+  S.tekisei=!S.tekisei;
+  /* ★穴x適性重視ONではF型(軸1頭固定)を使わせない（2026-09-05）。
+     適性重視は「軸が飛ぶ前提で網を広く張る」考え方で、軸1頭に依存するF型と設計が矛盾する。
+     2026-09-05の該当26鞍の実測: F6 OFF 87.7% / F6 ON 49.9% / B7 ON 101.3%
+     ＝ONのままF型で買うと最も悪い。ONにしたらBOXか2頭軸へ寄せる。 */
+  if(S.tekisei && ["F5","F6","F7"].includes(S.kata)) S.kata="B7";
+  reset();render();
+}
 const need=()=>{const K=KATA[S.kata];return K.ax===2?2:K.n;};
 function reset(){ S.sel=auto().slice(0,need()).map(h=>h.num); }
 function topup(){ for(const h of auto()){ if(S.sel.length>=need())break;
@@ -228,9 +238,12 @@ function render(){
     <div class="lb">BOX</div>
     <div class="seg">${["B5","B6","B7"].map(k=>
       `<button class="${S.kata===k?"on":""}" onclick="setK('${k}')">${k}</button>`).join("")}</div>
-    <div class="lb" style="margin-top:8px">フォーメーション</div>
-    <div class="seg">${["F5","F6","F7","J2"].map(k=>
-      `<button class="${S.kata===k?"on":""}" onclick="setK('${k}')">${KATA[k].l}</button>`).join("")}</div>
+    <div class="lb" style="margin-top:8px">フォーメーション${
+      S.tekisei?'<span class="lbno">穴×適性重視ONではF型を使いません</span>':""}</div>
+    <div class="seg">${["F5","F6","F7","J2"].map(k=>{
+      const no = S.tekisei && ["F5","F6","F7"].includes(k);
+      return `<button class="${S.kata===k?"on":""}" onclick="setK('${k}')"
+        ${no?"disabled":""}>${KATA[k].l}</button>`;}).join("")}</div>
     <div style="display:flex;align-items:center;gap:8px;margin-top:9px">
       <span class="mini">1点あたり</span><input type="number" step="100" min="100" value="${S.tanka}"
         onchange="S.tanka=Math.max(100,+this.value||100);save();render()"><span class="mini">円</span></div>
@@ -298,7 +311,9 @@ window.addEventListener("orientationchange", fitBottom);
 const TRASH='<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">'+
  '<path fill="currentColor" d="M6 2h4l.6 1H14v1.6H2V3h3.4L6 2zM3.4 5.6h9.2l-.7 8.2a1 1 0 0 1-1 .9H5.1a1 1 0 0 1-1-.9L3.4 5.6zm2.4 1.5.3 6h1.1l-.3-6H5.8zm3.3 0-.3 6h1.1l.3-6H9.1z"/></svg>';
 function setT(k){S.tenkai=k;reset();render();}
-function setK(k){S.kata=k;topup();render();}
+function setK(k){
+  if(S.tekisei && ["F5","F6","F7"].includes(k)) return;   /* ONではF型を選ばせない */
+  S.kata=k;topup();render();}
 function tap(n){const i=S.sel.indexOf(n);if(i>=0)S.sel.splice(i,1);else S.sel.push(n);render();}
 function keep(){const {out,K}=combos(); if(!out.length)return;
   const n=out.length, unit=Math.max(100,S.tanka||100);
