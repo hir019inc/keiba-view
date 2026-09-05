@@ -276,7 +276,7 @@ function render(){
 
   <div class="card"><div class="hd">買い方</div>
     ${(()=>{const k=kenshuHint(); return k?`<div class="khint">
-      <span class="kk">${esc(k.k)}向き</span><span class="kw">${esc(k.why)}。<b>8,534鞍の相対比較で、勝てる指示ではない（どちらも平均は負け）。最後は自分で決める</b></span></div>`:"";})()}
+      <span class="kk">${esc(k.k)}向き</span><span class="kw">${esc(k.why)}</span></div>`:"";})()}
     <div class="lb">BOX</div>
     <div class="seg">${["B5","B6","B7"].map(k=>
       `<button class="${S.kata===k?"on":""}" onclick="setK('${k}')">${k}</button>`).join("")}</div>
