@@ -44,6 +44,16 @@ main{padding:10px;max-width:640px;margin:0 auto}
 .row.dim .nm{color:#b3b9c2}
 .up{color:#0a7a3d;font-weight:800}.dn{color:#b8232f;font-weight:800}
 input[type=number]{width:110px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;font-size:14px}
+/* 穴x適性重視トグル（展開カードの下・2026-09-05） */
+.tkrow{display:flex;align-items:center;gap:8px;margin-top:9px;padding-top:9px;
+       border-top:1px solid var(--line)}
+.tklb{font-size:13px;font-weight:700}
+.tkn{font-size:11px;color:var(--sub);margin-left:auto}
+.tkbtn{padding:5px 13px;border:1px solid var(--line);border-radius:8px;background:#fff;
+       color:var(--sub);font-size:12px;font-weight:700}
+.tkbtn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tkbtn:disabled{opacity:.4}
+.tkm{margin-left:5px;color:var(--accent);font-size:10.5px;font-weight:700}
 /* --- 下部固定バー --- */
 /* ★iPhoneの角丸・ホームインジケータに食われるので下と左右に安全領域を取る（2026-08-30）。
    viewport-fit=cover を付けて env(safe-area-inset-*) を有効にしている。
@@ -129,7 +139,7 @@ const KATA={B5:{n:5,ax:0,l:"B5"},B6:{n:6,ax:0,l:"B6"},B7:{n:7,ax:0,l:"B7"},
             F5:{n:6,ax:1,l:"F5"},F6:{n:7,ax:1,l:"F6"},F7:{n:8,ax:1,l:"F7"},
             J2:{n:2,ax:2,l:"2頭軸×ヒモ全"}};
 let PACK=null, SF=null, IDX=null;
-let S={tenkai:"none",kata:"F6",tanka:100,sel:[],log:[]};
+let S={tenkai:"none",tekisei:false,kata:"F6",tanka:100,sel:[],log:[]};
 try{S.log=JSON.parse(localStorage.getItem("derby_kaime")||"[]")}catch(e){}
 try{const t=+localStorage.getItem("derby_tanka");if(t>=100)S.tanka=t}catch(e){}
 const save=()=>{try{localStorage.setItem("derby_kaime",JSON.stringify(S.log));
@@ -139,6 +149,24 @@ const oddsOf=(a,b,c)=>{ if(!SF) return null;
   const k=[a,b,c].map(Number).sort((x,y)=>x-y).join("-"); const v=SF.odds[k];
   return (v===undefined)?null:v; };
 
+/* 穴x適性重視のシグナル（2026-09-05 追加）。
+   HS順位では相手網の外(8-10位)だが、脚質/騎手/距離帯複勝/前走 で条件を満たす馬を拾う。
+   ★人気馬は外す(4番人気以下)＝「穴」を拾うのが狙いで、堅い相手を増やす操作ではない。
+   根拠=全4841Rの飛び込みパターン(前脚質1.5/騎手A2.2/HS8-10位1.44倍)＋2026-09-05の実測5鞍。 */
+function tekiseiSig(h){
+  const s=[];
+  if(["逃","先"].includes(String(h.kyaku||"").slice(0,1))) s.push("前");
+  const jk=String(h.jk||""); if(jk.includes("(A)")||jk.includes("(B)")) s.push("騎");
+  const kf=parseFloat(String(h.kofuku||"").replace("%","")); if(kf>=45) s.push("距複");
+  const z=String(h.zenso||""); if(["1","2","3"].includes(z.slice(0,1))) s.push("前走");
+  return s;
+}
+/* 対象＝HS8-10位 x 4番人気以下 x シグナル1つ以上 */
+function tekiseiHit(h){
+  return h.hsr>=8 && h.hsr<=10 && (h.pop==null||h.pop>=4) && tekiseiSig(h).length>0;
+}
+function tekiseiCount(){ return (PACK?PACK.horses:[]).filter(tekiseiHit).length; }
+
 function auto(){
   const H=PACK.horses;
   const ag=[...H].filter(h=>h.agari!=null).sort((a,b)=>a.agari-b.agari);
@@ -147,9 +175,14 @@ function auto(){
       sc+=(RULE[S.tenkai][h.kyaku]||0);
       if(S.tenkai==="agari"&&gr[h.num]) sc+=(PACK.heads-gr[h.num])*.35;
       if(S.tenkai==="ran"&&h.odds>=30) sc+=1.2;
+      /* 強め＝HS8-10位が相手網(HS2-7位)へ2頭まで入る強さ。
+         -hsr が基準なので、HS9位(-9)がHS6位(-6)を抜くには+3以上要る。
+         シグナル数で差を付ける（多いほど上へ）。強度は振り返りで調整する。 */
+      if(S.tekisei&&tekiseiHit(h)) sc += 3.2 + 0.4*tekiseiSig(h).length;
       return {...h,sc,moved:Math.abs(sc+h.hsr)>.01?(sc+h.hsr>0?1:-1):0};
     }).sort((a,b)=>b.sc-a.sc);
 }
+function setTeki(){S.tekisei=!S.tekisei;reset();render();}
 const need=()=>{const K=KATA[S.kata];return K.ax===2?2:K.n;};
 function reset(){ S.sel=auto().slice(0,need()).map(h=>h.num); }
 function topup(){ for(const h of auto()){ if(S.sel.length>=need())break;
@@ -181,7 +214,15 @@ function render(){
 
   <div class="card"><div class="hd">展開</div>
     <div class="seg">${TENKAI.map(([k,l])=>
-      `<button class="${S.tenkai===k?"on":""}" onclick="setT('${k}')">${l}</button>`).join("")}</div></div>
+      `<button class="${S.tenkai===k?"on":""}" onclick="setT('${k}')">${l}</button>`).join("")}</div>
+    <div class="tkrow">
+      <span class="tklb">穴×適性重視</span>
+      <span class="tkn">${tekiseiCount()?`該当${tekiseiCount()}頭`:"該当なし"}</span>
+      <button class="tkbtn ${S.tekisei?"on":""}" onclick="setTeki()"
+        ${tekiseiCount()?"":"disabled"}>${S.tekisei?"ON":"OFF"}</button>
+    </div>
+    <div class="note">HS8-10位 × 4番人気以下 × 適性(前寄り脚質/騎手A・B/距離帯複45%+/前走3着内)の馬を
+      相手へ引き上げる。点数は変わらない（中身が入れ替わる）。</div></div>
 
   <div class="card"><div class="hd">買い方</div>
     <div class="lb">BOX</div>
@@ -207,7 +248,8 @@ function render(){
       return `<div class="row ${on?"":"dim"}" onclick="tap(${h.num})">
         <span class="sel ${cls}">${on?i+1:""}</span>${badge(h.num,PACK.heads)}
         <span class="nm">${esc(h.name)}</span>
-        <span class="mt">${esc(h.pop??"-")}人 ${esc(h.odds??"-")} ${esc(h.kyaku)} 調${esc(h.oikiri)} HS${h.hsr}${mv}</span>
+        <span class="mt">${esc(h.pop??"-")}人 ${esc(h.odds??"-")} ${esc(h.kyaku)} 調${esc(h.oikiri)} HS${h.hsr}${mv}${
+          tekiseiHit(h)?`<b class="tkm">適${esc(tekiseiSig(h).join(""))}</b>`:""}</span>
       </div>`;}).join("")}
     <div class="note">タップで選択／解除。上から機械の並び（HSに展開の補正・▲▼＝HS順から動いた馬）。</div>
   </div>
@@ -260,7 +302,8 @@ function setK(k){S.kata=k;topup();render();}
 function tap(n){const i=S.sel.indexOf(n);if(i>=0)S.sel.splice(i,1);else S.sel.push(n);render();}
 function keep(){const {out,K}=combos(); if(!out.length)return;
   const n=out.length, unit=Math.max(100,S.tanka||100);
-  S.log.push(`${PACK.venue}${PACK.r}R 3連複 ${K.l} ${S.sel.slice(0,need()).join("-")} ${n}点×${unit}円 展開=${TENKAI.find(t=>t[0]===S.tenkai)[1]}`);
+  S.log.push(`${PACK.venue}${PACK.r}R 3連複 ${K.l} ${S.sel.slice(0,need()).join("-")} ${n}点×${unit}円 `
+    +`展開=${TENKAI.find(t=>t[0]===S.tenkai)[1]}${S.tekisei?";穴x適性重視=ON":""}`);
   save();render();}
 function drop(i){S.log.splice(i,1);save();render();}
 function copyAll(){const t=`${PACK.date} 買った記録\n`+S.log.map(x=>"- "+x).join("\n");
