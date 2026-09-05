@@ -45,6 +45,12 @@ main{padding:10px;max-width:640px;margin:0 auto}
 .up{color:#0a7a3d;font-weight:800}.dn{color:#b8232f;font-weight:800}
 input[type=number]{width:110px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;font-size:14px}
 /* 穴x適性重視トグル（展開カードの下・2026-09-05） */
+/* 券種の推奨（2026-09-05）。実測の相対比較であって「勝てる券種」ではない */
+.khint{display:flex;align-items:flex-start;gap:7px;margin-bottom:9px;padding:7px 8px;
+       background:var(--bg);border:1px solid var(--line);border-radius:9px}
+.khint .kk{flex:0 0 auto;font-size:11.5px;font-weight:800;color:#fff;background:var(--accent);
+           border-radius:6px;padding:2px 7px;white-space:nowrap}
+.khint .kw{font-size:10.5px;color:var(--sub);line-height:1.35}
 .tkrow{display:flex;align-items:center;gap:8px;margin-top:9px;padding-top:9px;
        border-top:1px solid var(--line)}
 .tklb{font-size:13px;font-weight:700}
@@ -184,6 +190,40 @@ function auto(){
       return {...h,sc,moved:Math.abs(sc+h.hsr)>.01?(sc+h.hsr>0?1:-1):0};
     }).sort((a,b)=>b.sc-a.sc);
 }
+/* 券種の推奨（★2026-09-05）。8,534鞍の実測で F6 と 軸の単勝 を同額(1,500円)で比べた結果。
+   1鞍あたりの平均損益（負の値＝どちらも負けるが、差が小さい方が有利）:
+     軸1-3番人気 x gap6以上   F6 -499 / 単勝 -358  → 単勝
+     軸1-2番人気 x gap8以上   F6 -578 / 単勝 -442  → 単勝
+     軸4-6番人気              F6 -430 / 単勝 -335  → 単勝
+     軸4-6番人気 x gap4以上   F6 -517 / 単勝 -551  → F6
+     軸4-6人気x30倍超x10頭+   F6 -168 / 単勝 -191  → F6（最も損が小さい）
+   ★どの条件も損益は負＝「勝てる券種」ではなく「同じ鞍でどちらがマシか」の相対比較。
+     実際に勝つかは人がどの鞍を選ぶかで決まる。器＝05_tools/wip_step2/kenshu_bt.py */
+function kenshuHint(){
+  if(!PACK||!PACK.horses||!PACK.horses.length) return null;
+  const hs=[...PACK.horses].sort((a,b)=>a.hsr-b.hsr);
+  const ax=hs[0]; if(!ax) return null;
+  const gap=(hs.length>1&&ax.hs!=null&&hs[1].hs!=null)?(ax.hs-hs[1].hs):null;
+  const pop=ax.pop, heads=PACK.heads||hs.length;
+  const mid=SF?midOdds():null;                    // 買い目の中央オッズ（薄さの判定）
+  if(pop==null||gap==null) return null;
+  if(pop<=3 && gap>=6)
+    return {k:"単勝", why:`軸${pop}番人気・gap${gap.toFixed(1)}＝軸が来ると読める帯。`
+      +`実測では同額なら単勝が有利（F6は取り分が薄まる）`};
+  if(pop>=4 && pop<=6 && (gap>=4 || (mid!=null && mid>30 && heads>=10)))
+    return {k:"F6", why:`妙味帯(軸${pop}番人気)で`
+      +(gap>=4?`gap${gap.toFixed(1)}`:`配当中央${Math.round(mid)}倍・${heads}頭`)
+      +`＝軸の単勝的中率が1割を切る帯。相手へ散らす方が拾える`};
+  if(pop>=4 && pop<=6)
+    return {k:"単勝", why:`妙味帯だがgapが小さく配当も薄い。実測では単勝がわずかに有利`};
+  return null;
+}
+function midOdds(){
+  const {out}=combos(); if(!out||!out.length) return null;
+  const os=out.map(c=>oddsOf(...c)).filter(v=>v!=null).sort((a,b)=>a-b);
+  return os.length?os[Math.floor(os.length/2)]:null;
+}
+
 function setTeki(){
   S.tekisei=!S.tekisei;
   /* ★穴x適性重視ONではF型(軸1頭固定)を使わせない（2026-09-05）。
@@ -235,6 +275,8 @@ function render(){
       相手へ引き上げる。点数は変わらない（中身が入れ替わる）。</div></div>
 
   <div class="card"><div class="hd">買い方</div>
+    ${(()=>{const k=kenshuHint(); return k?`<div class="khint">
+      <span class="kk">${esc(k.k)}向き</span><span class="kw">${esc(k.why)}。<b>8,534鞍の相対比較で、勝てる指示ではない（どちらも平均は負け）。最後は自分で決める</b></span></div>`:"";})()}
     <div class="lb">BOX</div>
     <div class="seg">${["B5","B6","B7"].map(k=>
       `<button class="${S.kata===k?"on":""}" onclick="setK('${k}')">${k}</button>`).join("")}</div>
