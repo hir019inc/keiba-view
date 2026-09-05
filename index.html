@@ -321,7 +321,7 @@ const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;
 const inline = t => t.split("<br>").map(x=>esc(x)).join("<br>")
                      .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
 /* ★バージョン表記＝ここだけ書き換える（モデル正典のVerと揃える） */
-const VER = "4.6.0";
+const VER = "4.6.1";
 const TABS = [["00_published/P1_TODAY.md","P1選定"],["HEATMAP","ヒートマップ"],["TODAYV4","TODAY"]];
 let state = { ba:"all", tm:"all", ttab:0, doc:TABS[0][0] };
 let lastText = "", lastPath = "", genAt = null, fetchAt = null;
