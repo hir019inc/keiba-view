@@ -199,8 +199,8 @@
   .tah:first-child { margin-top:2px; }
   .mv { background:var(--card); border:1px solid var(--line); border-radius:10px;
         padding:7px 8px; margin-bottom:6px; }
-  /* 単勝アラート: HS8位以下×現在4-9番人気×朝から支持が増えた馬。
-     対象が20頭前後になるので鞍ごとに束ねた1行リストにする（縦を使わない） */
+  /* 単勝アラート: HS8位以下×現在4-6番人気×当日朝からオッズが5%以上下がった馬。
+     鞍ごとに束ねた1行リストにする（縦を使わない） */
   .talist { border:1px solid var(--line); border-radius:10px; overflow:hidden;
             background:var(--card); }
   .tag { border-top:1px solid var(--line); }
@@ -321,7 +321,7 @@ const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;
 const inline = t => t.split("<br>").map(x=>esc(x)).join("<br>")
                      .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
 /* ★バージョン表記＝ここだけ書き換える（モデル正典のVerと揃える） */
-const VER = "4.5.0";
+const VER = "4.6.0";
 const TABS = [["00_published/P1_TODAY.md","P1選定"],["HEATMAP","ヒートマップ"],["TODAYV4","TODAY"]];
 let state = { ba:"all", tm:"all", ttab:0, doc:TABS[0][0] };
 let lastText = "", lastPath = "", genAt = null, fetchAt = null;
@@ -644,9 +644,10 @@ function renderOddsMoves(d){
     else grp.push({place:t.place, time:t.time, heads:t.heads, rows:[t]});
   });
   const taBlock = `<h3 class="tah">単勝アラート ${ta.length}頭</h3>
-    <p class="meta">HS8位以下 × 現在4-9番人気 × 朝から支持が増えた馬(オッズ-5%以上)。
-    2026-07-25〜08-30の211頭で単勝回収率117.3%(払戻率は80%)。ただし95%区間[64%,179%]＝
-    まだ勝てるとは言えない。<b>母数を貯めるための記録対象</b>。人気は現時点のオッズ順＝暫定。</p>` +
+    <p class="meta">HS8位以下 × 現在4-6番人気 × <b>当日朝から</b>オッズが5%以上下がった馬。
+    2026-07-25〜08-30の12開催日・85頭で単勝回収率154.7%・3着内32.9%(単勝の払戻率は80%/
+    動きを見ない同じ帯は67.5%)。ただし95%区間[59%,250%]＝まだ勝てるとは言えない。
+    <b>母数を貯めるための記録対象</b>。人気は現時点のオッズ順＝暫定。</p>` +
     (ta.length ? `<div class="talist">` + grp.map(g=>`<div class="tag">
       <div class="tah2" data-jump="${esc(g.place)}"><b>${esc(g.place)}</b>
         <span>${esc(g.time||"-")}</span>
