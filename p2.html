@@ -7,7 +7,9 @@
 :root{--bg:#f5f6f8;--card:#fff;--fg:#1a1a1a;--line:#e2e5ea;--accent:#1c4587;--sub:#68707c;--chip:#eef1f6}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,"Hiragino Sans",sans-serif;
-     font-size:14px;padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
+     font-size:14px;
+     /* JS(fitBottom)が実測値で上書きする。ここは初回描画までのフォールバック。 */
+     padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))}
 header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);padding:7px 10px 6px;z-index:9}
 .hrow{display:flex;gap:8px;align-items:center;max-width:640px;margin:0 auto}
 .silks{display:inline-flex;height:19px;border-radius:3px;overflow:hidden;box-shadow:0 0 0 1px var(--line);flex:0 0 auto}
@@ -223,7 +225,7 @@ function render(){
 
   const bar=$("bar");
   if(short){ bar.innerHTML=`<div class="st"><div><div class="k">あと${short}頭</div>
-    <div class="v warn">選んでください</div></div></div>`; return; }
+    <div class="v warn">選んでください</div></div></div>`; fitBottom(); return; }
   const n=out.length, unit=Math.max(100,S.tanka||100);
   const os=out.map(c=>oddsOf(...c)).filter(v=>v!=null).sort((a,b)=>a-b);
   const unknown=n-os.length;
@@ -236,7 +238,21 @@ function render(){
     <div><div class="k">トリガミ回避</div><div class="v ${os.length&&safe/os.length<.5?"warn":""}">${safe}/${os.length}</div></div>
     ${unknown?`<div><div class="k">配当不明</div><div class="v warn">${unknown}</div></div>`:""}
   </div><button class="keep" onclick="keep()">買った</button>`;
+  fitBottom();
 }
+
+/* ★2026-09-05: 下部固定バーの実高さを測って body の下余白に入れる。
+   旧実装は padding-bottom を 120px 固定にしていたが、バーの中身（点数/投資/配当中央/
+   トリガミ回避/配当不明の最大5項目＋ボタン）で高さが変わるため、最下部の
+   「買い目 N点を見る」がバーに隠れて開けなくなっていた（実機で確認）。
+   固定値をやめて実測に変える＝中身が増えても破綻しない。 */
+function fitBottom(){
+  const b = document.querySelector(".bar");
+  if (!b) return;
+  document.body.style.paddingBottom = (b.offsetHeight + 20) + "px";
+}
+window.addEventListener("resize", fitBottom);
+window.addEventListener("orientationchange", fitBottom);
 const TRASH='<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">'+
  '<path fill="currentColor" d="M6 2h4l.6 1H14v1.6H2V3h3.4L6 2zM3.4 5.6h9.2l-.7 8.2a1 1 0 0 1-1 .9H5.1a1 1 0 0 1-1-.9L3.4 5.6zm2.4 1.5.3 6h1.1l-.3-6H5.8zm3.3 0-.3 6h1.1l.3-6H9.1z"/></svg>';
 function setT(k){S.tenkai=k;reset();render();}
