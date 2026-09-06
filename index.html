@@ -101,6 +101,11 @@
          border:1px solid transparent; }
   .num.s { min-width:22px; height:22px; font-size:12.5px; }
   .name { font-size:17px; font-weight:700; }
+  /* 競馬ラボへの外部リンク（2026-09-07 追加）。カード自体が<a>なので入れ子にできず、
+     spanに data-lab を持たせて capture フェーズのクリックで開く。 */
+  .lab { margin-left:auto; font-size:11.5px; color:var(--sub); border:1px solid var(--line);
+         border-radius:99px; padding:2px 9px; white-space:nowrap; }
+  .lab:active { opacity:.5; }
   .pop { font-size:12px; color:var(--sub); border:1px solid var(--line);
          border-radius:99px; padding:1px 8px; white-space:nowrap; }
   .c3 { display:flex; gap:14px; color:var(--sub); font-size:12.5px; margin:4px 0 8px;
@@ -342,7 +347,7 @@ const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;
 const inline = t => t.split("<br>").map(x=>esc(x)).join("<br>")
                      .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
 /* ★バージョン表記＝ここだけ書き換える（モデル正典のVerと揃える） */
-const VER = "4.13.0";
+const VER = "4.14.0";
 const TABS = [["00_published/P1_TODAY.md","P1選定"],["HEATMAP","ヒートマップ"],["TODAYV4","TODAY"]];
 let state = { ba:"all", tm:"all", ttab:0, doc:TABS[0][0] };
 let lastText = "", lastPath = "", genAt = null, fetchAt = null;
@@ -397,11 +402,36 @@ function heatCell(v, cls, label){
     <div class="v">${esc(v)}</div>${label?`<div class="k" style="color:${fg};opacity:.75">${label}</div>`:""}</div>`;
 }
 
+/* ---------- 競馬ラボのレースURL（2026-09-07 追加） ----------
+   構造 = 日付8桁 + JRA場コード2桁 + R2桁。例 2026-09-06 中山8R → 202609060608 */
+const VCODE = {"札幌":"01","函館":"02","福島":"03","新潟":"04","東京":"05",
+               "中山":"06","中京":"07","京都":"08","阪神":"09","小倉":"10"};
+function labUrl(place, date8){
+  if (!date8) return "";
+  const m = String(place||"").match(/^(\D+)\s*(\d{1,2})/);
+  if (!m) return "";
+  const v = VCODE[m[1].trim()];
+  if (!v) return "";
+  return "https://www.keibalab.jp/db/race/" + date8 + v + String(m[2]).padStart(2,"0") + "/";
+}
+function labBadge(place, date8){
+  const u = labUrl(place, date8);
+  return u ? `<span class="lab" data-lab="${esc(u)}">ラボ</span>` : "";
+}
+/* カードは<a>なので、子のタップを capture で先に奪ってP2遷移と分ける */
+document.addEventListener("click", function(e){
+  const t = e.target.closest && e.target.closest("[data-lab]");
+  if (!t) return;
+  e.preventDefault(); e.stopPropagation();
+  window.open(t.dataset.lab, "_blank", "noopener");
+}, true);
+
 /* ---------- P1: カード描画（場×時間帯フィルタ） ---------- */
 function parseP1(md){
-  const races = []; let note = "";
+  const races = []; let note = ""; let date8 = "";
   for (const raw of md.split("\n")){
     const line = raw.trim();
+    if (!date8){ const dm = line.match(/(20\d\d)-(\d\d)-(\d\d)/); if (dm) date8 = dm[1]+dm[2]+dm[3]; }
     // ※生成 はヘッダーの鮮度表示で使うので脚注には出さない
     if (line.startsWith("※")) { if (!line.startsWith("※生成")) note += line + " "; continue; }
     if (!line.startsWith("|") || line.includes("発走 |") || /^\|[\s:|-]+\|$/.test(line)) continue;
@@ -419,12 +449,12 @@ function parseP1(md){
                  pay:(c.length>=12 ? c[10] : c[10]).split("/"),
                  payB:(c.length>=12 ? c[11] : c[10]).split("/") });
   }
-  return { races, note };
+  return { races, note, date8 };
 }
 const TM = [["all","全て"],["a","～11時"],["b","11-14"],["c","14-16"],["d","16時～"]];
 const tmOf = h => h<11 ? "a" : h<14 ? "b" : h<16 ? "c" : "d";
 function renderP1(md){
-  const {races, note} = parseP1(md);
+  const {races, note, date8} = parseP1(md);
   if (!races.length) return null;
   const bas = ["all", ...new Set(races.map(r=>r.ba))];
   let h = [];
@@ -447,7 +477,8 @@ function renderP1(md){
         <span class="pop" style="margin-left:auto">${esc(r.pop)}気</span></div>
       <div class="c2">${numBadge(r.num, r.heads)}
         <span class="name">${esc(r.name)}</span>
-        <span class="jk">${esc(r.jockey)}</span></div>
+        <span class="jk">${esc(r.jockey)}</span>
+        ${labBadge(r.place, date8)}</div>
       <div class="c3"><span>オッズ <b>${esc(r.odds)}</b></span>
         <span>HS <b>${esc(r.hs)}</b></span>
         <span class="aite">相手 ${(r.aite||[]).map(n=>numBadge(n, r.heads, true)).join("")}</span></div>

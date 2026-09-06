@@ -4,6 +4,11 @@
 <title>D.E.R.B.Y. P2 予想</title>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <style>
+  /* 競馬ラボへの外部リンク（2026-09-07 追加） */
+  .lab { display:inline-block; margin-left:8px; font-size:11.5px; text-decoration:none;
+         color:var(--sub,#888); border:1px solid var(--line,#ccc);
+         border-radius:99px; padding:2px 9px; white-space:nowrap; vertical-align:middle; }
+  .lab:active { opacity:.5; }
 :root{--bg:#f5f6f8;--card:#fff;--fg:#1a1a1a;--line:#e2e5ea;--accent:#1c4587;--sub:#68707c;--chip:#eef1f6}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,"Hiragino Sans",sans-serif;
@@ -260,8 +265,10 @@ function combos(){
 
 function render(){
   const ord=auto(), {out,K,short}=combos(), useN=need();
+  const _lu = labUrl(PACK.venue, PACK.r, PACK.date);
   $("rc").innerHTML=`<b>${esc(PACK.post_time)} ${esc(PACK.venue)}${esc(PACK.r)}</b> `+
-    `${esc(PACK.race_name)} ${esc(PACK.course)}・${esc(PACK.heads)}頭`;
+    `${esc(PACK.race_name)} ${esc(PACK.course)}・${esc(PACK.heads)}頭`+
+    (_lu ? `<a class="lab" href="${esc(_lu)}" target="_blank" rel="noopener">ラボ</a>` : "");
   const near=(IDX?.races||[]).slice(0,0);
   $("app").innerHTML=`
   <div class="card">
@@ -393,6 +400,17 @@ function keep(){const {out,K}=combos(); if(!out.length)return;
 function drop(i){S.log.splice(i,1);save();render();}
 function copyAll(){const t=`${PACK.date} 買った記録\n`+S.log.map(x=>"- "+x).join("\n");
   navigator.clipboard?.writeText(t).then(()=>alert("コピーしました\n\n"+t),()=>alert(t));}
+
+/* ---------- 競馬ラボのレースURL（2026-09-07 追加） ----------
+   構造 = 日付8桁 + JRA場コード2桁 + R2桁。例 2026-09-06 中山8R → 202609060608 */
+const VCODE = {"札幌":"01","函館":"02","福島":"03","新潟":"04","東京":"05",
+               "中山":"06","中京":"07","京都":"08","阪神":"09","小倉":"10"};
+function labUrl(venue, r, date){
+  const v = VCODE[String(venue||"").trim()];
+  const d = String(date||"").replace(/-/g, "");
+  if (!v || d.length !== 8 || !r) return "";
+  return "https://www.keibalab.jp/db/race/" + d + v + String(r).padStart(2,"0") + "/";
+}
 
 /* ---------- 起動: ?rid=<raceId> か ?r=<場R> ---------- */
 (async()=>{
