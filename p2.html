@@ -5,9 +5,12 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <style>
   /* 競馬ラボへの外部リンク（2026-09-07 追加） */
-  .lab { display:inline-block; margin-left:8px; font-size:11.5px; text-decoration:none;
-         color:var(--sub,#888); border:1px solid var(--line,#ccc);
-         border-radius:99px; padding:2px 9px; white-space:nowrap; vertical-align:middle; }
+  /* ★2026-09-12: 見つけられないとの指摘。色を付け、レース見出しの次の行に独立して置く */
+  .lab { display:inline-block; margin-left:8px; font-size:12px; font-weight:700; text-decoration:none;
+         color:#fff; background:var(--accent,#1c4587); border:1px solid var(--accent,#1c4587);
+         border-radius:99px; padding:3px 11px; white-space:nowrap; vertical-align:middle;
+         flex:0 0 auto; }
+  .lab::after { content:"↗"; font-size:10px; margin-left:3px; opacity:.85; }
   .lab:active { opacity:.5; }
 :root{--bg:#f5f6f8;--card:#fff;--fg:#1a1a1a;--line:#e2e5ea;--accent:#1c4587;--sub:#68707c;--chip:#eef1f6}
 *{box-sizing:border-box}
@@ -98,7 +101,11 @@ summary{font-size:11.5px;color:var(--sub)}
 .del:active{background:#fdecea;color:#b8232f;border-color:#f0b6b6}
 .back{color:var(--accent);font-size:13px;font-weight:700;text-decoration:none;flex:0 0 auto;
       padding:2px 8px 2px 0;border-right:1px solid var(--line)}
-.rc{font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ★2026-09-12: 見出しは1行に省略する指定なので、中にラボのリンクを入れると
+   長い見出しの鞍（例 阪神12R サラ系3歳上500万円以下 ダ1200・16頭）でリンクごと切り落とされていた。
+   リンクは見出しの外（.hrowの子）へ出し、縮むのは見出しだけにする。 */
+.rc{font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    flex:1 1 auto;min-width:0}
 .rc b{color:var(--fg);font-size:13.5px}
 
 .err{color:#b8232f;font-size:12.5px;padding:10px}
@@ -111,7 +118,8 @@ summary{font-size:11.5px;color:var(--sub)}
 </style></head><body>
 <header>
   <div class="hrow"><a class="back" href="./">‹ P1選定</a>
-    <span class="rc" id="rc">読み込み中…</span></div>
+    <span class="rc" id="rc">読み込み中…</span>
+    <a class="lab" id="labbtn" href="#" target="_blank" rel="noopener" hidden>ラボ</a></div>
 </header>
 <main><div id="app"><p class="load">読み込み中…</p></div></main>
 <div class="bar"><div class="barin" id="bar"></div></div>
@@ -267,8 +275,11 @@ function render(){
   const ord=auto(), {out,K,short}=combos(), useN=need();
   const _lu = labUrl(PACK.venue, PACK.r, PACK.date);
   $("rc").innerHTML=`<b>${esc(PACK.post_time)} ${esc(PACK.venue)}${esc(PACK.r)}</b> `+
-    `${esc(PACK.race_name)} ${esc(PACK.course)}・${esc(PACK.heads)}頭`+
-    (_lu ? `<a class="lab" href="${esc(_lu)}" target="_blank" rel="noopener">ラボ</a>` : "");
+    `${esc(PACK.race_name)} ${esc(PACK.course)}・${esc(PACK.heads)}頭`;
+  /* ★2026-09-12: リンクは見出しの外（#labbtn）へ。見出しは1行に省略される指定なので、
+     中に入れると長い見出しの鞍でリンクごと切り落とされていた（阪神12Rで発生）。 */
+  const _lb = $("labbtn");
+  if (_lb){ if (_lu){ _lb.href = _lu; _lb.hidden = false; } else { _lb.hidden = true; } }
   const near=(IDX?.races||[]).slice(0,0);
   $("app").innerHTML=`
   <div class="card">
