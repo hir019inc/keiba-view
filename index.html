@@ -159,7 +159,12 @@ details[open] summary::after{content:"⌃";transform:translateY(3px)}
 .mini{font-size:12.5px;color:var(--sub);padding:0 16px 14px;line-height:1.6}
 .mrow{display:flex;align-items:center;gap:9px;padding:10px 16px;position:relative;cursor:pointer}
 .mrow+.mrow::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
-.mrow .mt{flex:0 0 42px;font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums}
+/* 材料の行も妙味・全レースと同じく、時刻の下にレース番号を置く */
+.mrow .mt{flex:0 0 47px;align-self:flex-start;padding-top:1px}
+.mrow .mt b{display:block;font-size:13.5px;font-weight:800;letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums}
+.mrow .mt i{display:block;font-style:normal;font-size:11px;font-weight:700;color:var(--sub);
+  margin-top:2px;white-space:nowrap;letter-spacing:-.02em}
 .mrow .mg{flex:1 1 auto;min-width:0;font-size:13.5px;font-weight:600;line-height:1.4}
 .mrow .sub2{display:block;font-size:11.5px;color:var(--sub);font-weight:500;margin-top:2px}
 .mrow .mv{flex:0 0 auto;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
@@ -181,7 +186,9 @@ details[open] summary::after{content:"⌃";transform:translateY(3px)}
 .callout{font-size:12.5px;color:var(--fg2);background:var(--gold-l);border-radius:12px;padding:12px 13px;
   line-height:1.6;margin-top:15px}
 .callout b{color:var(--gold)}
-.memo{width:100%;border:.5px solid var(--sep);border-radius:12px;padding:11px;font-size:14.5px;
+/* ★入力欄は必ず16px以上。iOS Safariは16px未満の input/textarea にフォーカスすると
+   自動でズームし、そのまま戻らない（2026-09-13にメモ欄14.5pxで発生）。 */
+.memo{width:100%;border:.5px solid var(--sep);border-radius:12px;padding:11px;font-size:16px;
   font-family:inherit;margin-top:14px;background:var(--card2);color:var(--fg);resize:none}
 .btns{display:flex;gap:9px;margin-top:16px}
 .btns button{flex:1 1 0;padding:14px;border-radius:13px;border:0;font:inherit;font-size:15.5px;
@@ -190,7 +197,7 @@ details[open] summary::after{content:"⌃";transform:translateY(3px)}
 .btns button:active{opacity:.7}
 .err{background:var(--card);border-radius:16px;padding:16px;box-shadow:var(--shadow);font-size:14px;line-height:1.7}
 .err b{color:var(--red)}
-.setup input{width:100%;border:.5px solid var(--sep);border-radius:10px;padding:11px;font-size:15px;
+.setup input{width:100%;border:.5px solid var(--sep);border-radius:10px;padding:11px;font-size:16px;
   margin-top:8px;background:var(--card2);color:var(--fg);font-family:inherit}
 .hide{display:none}
 .load{color:var(--sub);font-size:14px;padding:24px 4px}
@@ -259,8 +266,9 @@ details[open] summary::after{content:"⌃";transform:translateY(3px)}
 .del{border:0;background:none;color:var(--sub);cursor:pointer;padding:3px 5px;font:inherit;font-size:11.5px}
 .copyall{width:100%;margin-top:11px;padding:10px;border-radius:10px;background:var(--fill);
   color:var(--fg);border:0;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
-.numin{width:78px;border:.5px solid var(--sep);border-radius:9px;padding:8px;font:inherit;
-  font-size:14px;background:var(--card2);color:var(--fg);text-align:right;font-variant-numeric:tabular-nums}
+/* 16px＝iOSのオートズーム回避（.memo の注記を参照） */
+.numin{width:86px;border:.5px solid var(--sep);border-radius:9px;padding:8px;font:inherit;
+  font-size:16px;background:var(--card2);color:var(--fg);text-align:right;font-variant-numeric:tabular-nums}
 /* 端末に届いている版を判別できるように（Pagesは10分のキャッシュが付くため） */
 .verline{font-size:11px;color:var(--sub);text-align:center;padding:22px 0 6px;letter-spacing:.02em}
 </style></head><body>
@@ -379,14 +387,15 @@ function tenkaiLine(){
   return Object.keys(by).map(k=>`${k} 前残り <b>${Math.round(by[k].f/by[k].n*100)}%</b>（${by[k].n}鞍）`).join("　/　");
 }
 /* 場R＋騎手の小さな添え字（馬名の後ろに出す） */
+/* 場Rは行の左（時刻の下）へ移したので、ここでは騎手と補足だけを出す */
 function who(x,extra){
-  const bits=[x.place, x.jk, extra].filter(Boolean).map(esc);
+  const bits=[x.jk, extra].filter(Boolean).map(esc);
   return bits.length?`<span class="sub2">${bits.join("・")}</span>`:"";
 }
 function mrow(place,time,inner,val,cls){
   const rid=ridOf(place);
   return `<div class="mrow" ${rid?`onclick="openRace('${rid}')"`:""}>
-    <span class="mt">${esc(time||"")}</span><span class="mg">${inner}</span>
+    <span class="mt"><b>${esc(time||"")}</b><i>${esc(place||"")}</i></span><span class="mg">${inner}</span>
     ${val?`<span class="mv ${cls||""}">${esc(val)}</span>`:""}</div>`;
 }
 function drawHome(){
