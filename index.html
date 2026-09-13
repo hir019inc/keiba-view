@@ -123,9 +123,12 @@ h1.big{font-size:32px;font-weight:800;letter-spacing:-.04em;margin:18px 2px 2px;
   justify-content:center;font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;
   border:1px solid transparent;vertical-align:-7px}
 .num.s{width:21px;height:21px;font-size:11.5px;border-radius:6px;vertical-align:-5px;margin-right:5px}
-.hn{font-size:15.5px;font-weight:700;letter-spacing:-.025em;flex:0 0 auto}
-.hm{font-size:12.5px;color:var(--sub);flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;font-variant-numeric:tabular-nums}
+/* 馬名と詳細を縦に積む＝騎手を入れると1行では収まらないため（2026-09-13） */
+.hg{flex:1 1 auto;min-width:0}
+.hn{font-size:15.5px;font-weight:700;letter-spacing:-.025em;display:block;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hm{font-size:12.5px;color:var(--sub);display:block;margin-top:2px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}
 .hsb{flex:0 0 auto;font-size:11.5px;font-weight:800;color:var(--accent2);background:var(--accent-l);
   border-radius:6px;padding:3px 7px;font-variant-numeric:tabular-nums}
 .pin{flex:0 0 auto;color:var(--gold);font-size:14px}
@@ -133,6 +136,9 @@ h1.big{font-size:32px;font-weight:800;letter-spacing:-.04em;margin:18px 2px 2px;
 .bias div{flex:1 1 0;background:var(--card2);border-radius:12px;padding:11px 8px;text-align:center}
 .bias .v{font-size:18px;font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
 .bias .k{font-size:11px;color:var(--sub);line-height:1.4;margin-top:3px}
+/* ★.bias div の箱指定（背景・余白・角丸）を打ち消す。打ち消さないとゲージが潰れて見えない */
+.bias .gauge{width:78px;margin:8px auto 2px;flex:none;height:15px;
+  background:none;padding:0;border-radius:0}
 .pickbtn{width:100%;margin-top:12px;padding:12px;border-radius:12px;border:0;font:inherit;font-size:15px;
   font-weight:800;cursor:pointer;background:var(--gold-l);color:var(--gold)}
 .pickbtn.on{background:var(--gold);color:#fff}
@@ -217,7 +223,7 @@ details[open] summary::after{content:"⌃";transform:translateY(3px)}
 "use strict";
 /* ★画面に出す版。更新が端末に届いたかを利用者が判別できるようにする（2026-09-13） */
 /* ★version_check.py が読む形（"5.0.0"＝Vを付けない）。表示は下で "V" を足す */
-const VER="5.0.0";
+const VER="5.1.0";
 const APPVER="V"+VER;
 const LS={repo:"kv_repo",token:"kv_token",picks:"derby_picks",theme:"derby_theme"};
 const $=id=>document.getElementById(id);
@@ -438,6 +444,9 @@ function drawRace(){
   const lu=labUrl(place,PACK.date), lb=$("labbtn");
   if(lu){lb.href=lu;lb.classList.remove("hide");}else lb.classList.add("hide");
   const cs=((TODAY&&TODAY.tenkai&&TODAY.tenkai.courses)||[]).find(c=>c.ba===PACK.venue&&PACK.course&&PACK.course.startsWith(c.surf));
+  /* 展開はホームと同じ4段階で見せる（％を2枚並べても右が何の％か読めなかったため） */
+  const bb=cs?tkband(cs.base):null, tb=(cs&&cs.fin)?tkband(cs.today):null;
+  const tseg=[0,1,2,3].map(i=>`<i class="${tb===i?"on":""}${bb===i?" base":""}"></i>`).join("");
   const m=minsTo(PACK.post_time);
   const h=[];
   h.push(`<h1 class="big">${esc(place)}R</h1>
@@ -445,8 +454,8 @@ function drawRace(){
   const pc=PACK.pace||{};
   h.push(`<div class="card"><div class="inner"><div class="bias">
     <div><div class="v">逃${pc.nige||0} 先${pc.sen||0}</div><div class="k">差${pc.sashi||0} 追${pc.oi||0}<br>${esc(pc.guess||"")}寄り</div></div>
-    <div><div class="v">${cs?Math.round(cs.base*100)+"%":"—"}</div><div class="k">このコースの<br>平常 前残り</div></div>
-    <div><div class="v">${cs&&cs.fin?Math.round(cs.today*100)+"%":"—"}</div><div class="k">今日の同条件<br>（${cs?cs.fin:0}鞍）</div></div>
+    <div><div class="v">${tb!=null?TKLAB[tb]:"—"}</div><div class="gauge">${tseg}</div>
+      <div class="k">今日の決まり方（${cs?cs.fin:0}鞍）<br>平常は${bb!=null?TKLAB[bb]:"—"}</div></div>
   </div>
   <button class="pickbtn ${p?"on":""}" onclick="togglePick()">${p?"★ ピック中（外す）":"★ この鞍をピック"}</button>
   </div></div>`);
@@ -454,8 +463,8 @@ function drawRace(){
   h.push((PACK.horses||[]).slice().sort((a,b)=>(a.hsr||99)-(b.hsr||99)).map(hh=>`
     <div class="hr ${isMk(hh.num)?"picked":""}" onclick="openM(${hh.num})">
       ${badge(hh.num,PACK.heads)}
-      <span class="hn">${esc(hh.name)}</span>
-      <span class="hm">${esc(hh.pop)}人 ${esc(hh.odds)} ${esc(hh.kyaku)} 調${esc(hh.oikiri||"-")}</span>
+      <span class="hg"><span class="hn">${esc(hh.name)}</span>
+        <span class="hm">${hh.jk?esc(hh.jk)+"・":""}${esc(hh.pop)}人 ${esc(hh.odds)} ${esc(hh.kyaku)} 調${esc(hh.oikiri||"-")}</span></span>
       ${isMk(hh.num)?'<span class="pin">★</span>':""}
       <span class="hsb">HS${esc(hh.hsr)}</span>
     </div>`).join(""));
