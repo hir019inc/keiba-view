@@ -82,16 +82,22 @@ h1.big{font-size:32px;font-weight:800;letter-spacing:-.04em;margin:18px 2px 2px;
 .row{display:flex;align-items:center;gap:11px;padding:14px 16px;position:relative;cursor:pointer}
 .row+.row::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
 .row:active{background:var(--card2)}
-/* 発走時刻は上端に揃える。見出しが2行に折り返した時に縦中央だと段がずれて見えるため */
-.time{flex:0 0 46px;font-size:15.5px;font-weight:800;font-variant-numeric:tabular-nums;
-  letter-spacing:-.04em;align-self:flex-start;padding-top:1px}
+/* 時刻の下にレース番号を置く＝見出しから場名が外れ、レース名に幅を回せる。
+   上端に揃えるのは、見出しが折り返した時に縦中央だと段がずれて見えるため */
+.time{flex:0 0 47px;align-self:flex-start;padding-top:1px}
+.time b{display:block;font-size:15.5px;font-weight:800;font-variant-numeric:tabular-nums;
+  letter-spacing:-.04em}
+.time i{display:block;font-style:normal;font-size:11.5px;font-weight:700;color:var(--sub);
+  margin-top:2px;white-space:nowrap;letter-spacing:-.02em}
 .g{flex:1 1 auto;min-width:0}
 /* 1行省略＝狭い端末で見出しも軸も折り返し、行の高さがバラバラになるのを防ぐ。
    ※中にボタンやリンクを入れないこと（V4.15.1でラボボタンを飲み込んだ事故がある） */
 .g1{font-size:16px;font-weight:700;letter-spacing:-.025em;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.g2{font-size:12.5px;color:var(--sub);margin-top:3px;
+.g2{font-size:12px;color:var(--sub);margin-top:3px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 騎手＝全角スペースで区切ると7px無駄になるので、余白と濃さで分ける */
+.g2 .jk{margin-left:5px;opacity:.78}
 .pv{flex:0 0 auto;text-align:right;font-variant-numeric:tabular-nums}
 .pv b{display:block;font-size:17px;font-weight:800;letter-spacing:-.04em;color:var(--accent2)}
 .pv i{font-style:normal;font-size:11px;color:var(--sub)}
@@ -122,7 +128,8 @@ h1.big{font-size:32px;font-weight:800;letter-spacing:-.04em;margin:18px 2px 2px;
 .num{flex:0 0 auto;width:27px;height:27px;border-radius:8px;display:inline-flex;align-items:center;
   justify-content:center;font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;
   border:1px solid transparent;vertical-align:-7px}
-.num.s{width:21px;height:21px;font-size:11.5px;border-radius:6px;vertical-align:-5px;margin-right:5px}
+/* vertical-align は実測で合わせた（-5pxだとチップが約2px下がり、馬名が上寄りに見えた） */
+.num.s{width:21px;height:21px;font-size:11.5px;border-radius:6px;vertical-align:-3px;margin-right:5px}
 /* 馬名と詳細を縦に積む＝騎手を入れると1行では収まらないため（2026-09-13） */
 .hg{flex:1 1 auto;min-width:0}
 .hn{font-size:15.5px;font-weight:700;letter-spacing:-.025em;display:block;
@@ -355,10 +362,10 @@ function drawHome(){
   h.push(`<div class="sec">妙味 <span class="cnt">${myomi?esc(myomi.cond):""}</span></div>`);
   h.push(`<div class="card">${races.length?races.map(r=>`
     <div class="row" onclick="openRaceByPlace('${esc(r.place)}')">
-      <span class="time">${esc(r.time)}</span>
-      <div class="g"><div class="g1">${esc(r.place)} ${esc(r.name)}</div>
+      <span class="time"><b>${esc(r.time)}</b><i>${esc(r.place)}</i></span>
+      <div class="g"><div class="g1">${esc(r.name)}</div>
         <div class="g2">${r.hs1num
-          ? `${badge(r.hs1num,r.heads,true)}${esc(r.hs1name||"")}${r.jk?`　${esc(r.jk)}`:""}`
+          ? `${badge(r.hs1num,r.heads,true)}${esc(r.hs1name||"")}${r.jk?`<span class="jk">${esc(r.jk)}</span>`:""}`
           : `${esc(r.course)}・${esc(r.heads)}頭`}</div></div>
       <span class="pv"><b>${esc(r.value)}倍</b><i>${esc(myomi.vlabel||"")}</i></span><span class="chev">›</span>
     </div>`).join(""):`<div class="inner" style="color:var(--sub);font-size:13.5px">該当なし</div>`}</div>`);
@@ -402,10 +409,10 @@ function drawHome(){
   const arace=(TODAY.allraces&&TODAY.allraces.length)?TODAY.allraces:null;
   h.push(`<details><summary>全レース<span class="c">${(arace||(IDX&&IDX.races)||[]).length}鞍</span></summary>
     ${(arace||(IDX&&IDX.races)||[]).map(r=>`<div class="row" onclick="openRaceByPlace('${esc(r.place)}')">
-      <span class="time">${esc(r.time)}</span>
-      <div class="g"><div class="g1">${esc(r.place)} ${esc(r.name)}</div>
+      <span class="time"><b>${esc(r.time)}</b><i>${esc(r.place)}</i></span>
+      <div class="g"><div class="g1">${esc(r.name)}</div>
         <div class="g2">${r.hs1num
-          ? `${badge(r.hs1num,r.heads,true)}${esc(r.hs1name)}${r.jk?`　${esc(r.jk)}`:""}`
+          ? `${badge(r.hs1num,r.heads,true)}${esc(r.hs1name)}${r.jk?`<span class="jk">${esc(r.jk)}</span>`:""}`
           : `${esc(r.course)}・${esc(r.heads)}頭`}</div></div>
       ${r.pop||r.odds!=null
         ? `<span class="pv"><b>${r.pop?esc(r.pop)+"人":""} ${r.odds!=null?esc(r.odds):""}</b>
@@ -428,9 +435,23 @@ async function openRace(rid){
   go("race");
   try{ PACK=JSON.parse(await fetchDoc(`00_published/p2/${rid}.json`)); }
   catch(e){ $("racebody").innerHTML=`<div class="err"><b>読み込めません</b><br>${esc(e.message)}</div>`; return; }
+  fillPickJk();
   drawRace();
 }
 function pickOf(){ return PACK?PICKS.find(p=>p.race_id===PACK.race_id):null; }
+/* 騎手を持たない古いピックを、その鞍を開いた時に埋める。
+   ピックは付けた時点の情報を保存する作りなので、騎手を保存するようにする前に
+   付けたものは jk を持たない。ホーム側は馬ごとの騎手を持っていないのでここで補う。 */
+function fillPickJk(){
+  const p=pickOf(); if(!p||!(p.marks||[]).length||!PACK) return;
+  let changed=false;
+  p.marks.forEach(m=>{
+    if(m.jk) return;
+    const h=(PACK.horses||[]).find(x=>+x.num===+m.num);
+    if(h&&h.jk){ m.jk=h.jk; changed=true; }
+  });
+  if(changed) savePicks();
+}
 function ensurePick(state){
   let p=pickOf();
   if(!p){p={race_id:PACK.race_id,title:`${PACK.venue}${PACK.r}R ${PACK.race_name}`,
