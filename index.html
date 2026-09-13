@@ -141,7 +141,10 @@ h1.big{font-size:32px;font-weight:800;letter-spacing:-.04em;margin:18px 2px 2px;
 .pin{flex:0 0 auto;color:var(--gold);font-size:14px}
 .bias{display:flex;gap:9px}
 .bias div{flex:1 1 0;background:var(--card2);border-radius:12px;padding:11px 8px;text-align:center}
-.bias .v{font-size:18px;font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+/* 「ミドルペース寄り」まで1行に収める（18pxでも16.5pxでも折り返した）。
+   nowrap で段が割れるのを防ぎ、字送りを詰めて幅を作る。 */
+.bias .v{font-size:15px;font-weight:800;letter-spacing:-.05em;font-variant-numeric:tabular-nums;
+  white-space:nowrap;line-height:1.3}
 .bias .k{font-size:11px;color:var(--sub);line-height:1.4;margin-top:3px}
 /* ★.bias div の箱指定（背景・余白・角丸）を打ち消す。打ち消さないとゲージが潰れて見えない */
 .bias .gauge{width:78px;margin:8px auto 2px;flex:none;height:15px;
@@ -208,7 +211,10 @@ details[open] summary::after{content:"⌃";transform:translateY(3px)}
 .tkg b{font-size:13.5px;font-weight:700;letter-spacing:-.02em;display:block}
 .tkg .s{font-size:11.5px;color:var(--sub);margin-top:2px;display:block}
 .gauge{flex:0 0 84px;display:flex;gap:3px;height:18px;align-items:stretch}
-.gauge i{flex:1 1 0;border-radius:3px;background:var(--fill);position:relative}
+/* ★輪郭を必ず出す。ダークでは --fill と --card2 が同じ #2c2c2e で、
+   塗られていないセグメントが箱の背景に溶けて見えなくなる（2026-09-13 実機で発覚）。 */
+.gauge i{flex:1 1 0;border-radius:3px;background:var(--fill);position:relative;
+  box-shadow:inset 0 0 0 .5px var(--sep)}
 .gauge i.on{background:var(--accent2)}
 .gauge i.base::after{content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;
   margin:-2.5px 0 0 -2.5px;border-radius:50%;background:var(--sub);opacity:.5}
@@ -706,7 +712,8 @@ function drawRace(keep){
     <div class="date">${esc(PACK.race_name)}・${esc(PACK.post_time)}（${m===null?"":m<0?"発走済み":"あと"+m+"分"}）・${esc(PACK.course)}${esc(PACK.going||"")}・${esc(PACK.heads)}頭</div>`);
   const pc=PACK.pace||{};
   h.push(`<div class="card"><div class="inner"><div class="bias">
-    <div><div class="v">逃${pc.nige||0} 先${pc.sen||0}</div><div class="k">差${pc.sashi||0} 追${pc.oi||0}<br>${esc(pc.guess||"")}寄り</div></div>
+    <div><div class="v">${pc.guess?esc(pc.guess)+"ペース寄り":"—"}</div>
+      <div class="k">逃${pc.nige||0} 先${pc.sen||0}<br>差${pc.sashi||0} 追${pc.oi||0}</div></div>
     <div><div class="v">${tb!=null?TKLAB[tb]:"—"}</div><div class="gauge">${tseg}</div>
       <div class="k">今日の決まり方（${cs?cs.fin:0}鞍）<br>平常は${bb!=null?TKLAB[bb]:"—"}</div></div>
   </div>
