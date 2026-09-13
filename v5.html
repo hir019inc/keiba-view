@@ -207,8 +207,8 @@ details[open] summary::after{content:"⌃";transform:translateY(3px)}
 <script>
 "use strict";
 /* ★画面に出す版。更新が端末に届いたかを利用者が判別できるようにする（2026-09-13） */
-const VER="V5.0.5";
-const APPVER=VER+" / 09-13 19:40";
+const VER="V5.0.6";
+const APPVER=VER+" / 09-13 20:05";
 const LS={repo:"kv_repo",token:"kv_token",picks:"derby_picks",theme:"derby_theme"};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
@@ -338,7 +338,9 @@ function drawHome(){
     <div class="row" onclick="openRaceByPlace('${esc(r.place)}')">
       <span class="time">${esc(r.time)}</span>
       <div class="g"><div class="g1">${esc(r.place)} ${esc(r.name)}</div>
-        <div class="g2">${esc(r.course)}・${esc(r.heads)}頭／軸 ${esc(r.hs1num)}番（${esc(r.pop)}人）gap${esc(r.gap)}</div></div>
+        <div class="g2">${r.hs1num
+          ? `${badge(r.hs1num,r.heads,true)}${esc(r.hs1name||"")}${r.jk?`　${esc(r.jk)}`:""}${r.pop?`・${esc(r.pop)}人気`:""}${r.gap!=null?`・gap${esc(r.gap)}`:""}`
+          : `${esc(r.course)}・${esc(r.heads)}頭`}</div></div>
       <span class="pv"><b>${esc(r.value)}倍</b><i>${esc(myomi.vlabel||"")}</i></span><span class="chev">›</span>
     </div>`).join(""):`<div class="inner" style="color:var(--sub);font-size:13.5px">該当なし</div>`}</div>`);
 
