@@ -35,6 +35,8 @@ header{position:sticky;top:0;z-index:30;background:var(--hdr);
   box-shadow:0 0 0 .5px var(--sep)}
 .silks i{width:5px;height:100%;display:block}
 .wm{font-size:15.5px;font-weight:800;letter-spacing:.1em;white-space:nowrap}
+.vtag{flex:0 0 auto;font-size:10.5px;font-weight:700;color:var(--sub);letter-spacing:.02em;
+  font-variant-numeric:tabular-nums;white-space:nowrap}
 .back{flex:0 0 auto;display:flex;align-items:center;gap:3px;color:var(--accent2);font-size:16px;
   font-weight:600;letter-spacing:-.02em;background:none;border:0;padding:0;cursor:pointer}
 .back svg{width:11px;height:18px;display:block}
@@ -107,10 +109,11 @@ h1.big{font-size:32px;font-weight:800;letter-spacing:-.04em;margin:18px 2px 2px;
 .hr+.hr::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
 .hr:active{background:var(--card2)}
 .hr.picked{background:var(--gold-l)}
-.num{flex:0 0 auto;width:27px;height:27px;border-radius:8px;display:flex;align-items:center;
+/* inline-flex＝馬番チップを馬名と同じ行に置く（blockだと改行して間延びする） */
+.num{flex:0 0 auto;width:27px;height:27px;border-radius:8px;display:inline-flex;align-items:center;
   justify-content:center;font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;
-  border:1px solid transparent}
-.num.s{width:22px;height:22px;font-size:11.5px;border-radius:6px}
+  border:1px solid transparent;vertical-align:-7px}
+.num.s{width:21px;height:21px;font-size:11.5px;border-radius:6px;vertical-align:-5px;margin-right:5px}
 .hn{font-size:15.5px;font-weight:700;letter-spacing:-.025em;flex:0 0 auto}
 .hm{font-size:12.5px;color:var(--sub);flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -169,12 +172,26 @@ details[open] summary::after{content:"⌃";transform:translateY(3px)}
   margin-top:8px;background:var(--card2);color:var(--fg);font-family:inherit}
 .hide{display:none}
 .load{color:var(--sub);font-size:14px;padding:24px 4px}
+/* 展開＝数字でなく前後の傾きで読ませる。左が前・右が後 */
+.tkrow{display:flex;align-items:center;gap:11px;padding:11px 16px;position:relative}
+.tkrow+.tkrow::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
+.tkg{flex:1 1 auto;min-width:0}
+.tkg b{font-size:13.5px;font-weight:700;letter-spacing:-.02em;display:block}
+.tkg .s{font-size:11.5px;color:var(--sub);margin-top:2px;display:block}
+.gauge{flex:0 0 84px;display:flex;gap:3px;height:18px;align-items:stretch}
+.gauge i{flex:1 1 0;border-radius:3px;background:var(--fill);position:relative}
+.gauge i.on{background:var(--accent2)}
+.gauge i.base::after{content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;
+  margin:-2.5px 0 0 -2.5px;border-radius:50%;background:var(--sub);opacity:.5}
+.gauge i.on.base::after{background:#fff;opacity:.9}
+.tklab{flex:0 0 40px;text-align:right;font-size:12.5px;font-weight:800;letter-spacing:-.02em}
 /* 端末に届いている版を判別できるように（Pagesは10分のキャッシュが付くため） */
 .verline{font-size:11px;color:var(--sub);text-align:center;padding:22px 0 6px;letter-spacing:.02em}
 </style></head><body>
 
 <header><div class="hrow">
-  <div class="brand" id="brand"><span class="silks" id="silks"></span><span class="wm">D.E.R.B.Y.</span></div>
+  <div class="brand" id="brand"><span class="silks" id="silks"></span><span class="wm">D.E.R.B.Y.</span>
+    <span class="vtag" id="vtag"></span></div>
   <button class="back hide" id="backb" onclick="go('home')">
     <svg viewBox="0 0 11 18" fill="none"><path d="M9.5 1L2 9l7.5 8" stroke="currentColor" stroke-width="2.2"
       stroke-linecap="round" stroke-linejoin="round"/></svg>ホーム</button>
@@ -190,7 +207,8 @@ details[open] summary::after{content:"⌃";transform:translateY(3px)}
 <script>
 "use strict";
 /* ★画面に出す版。更新が端末に届いたかを利用者が判別できるようにする（2026-09-13） */
-const APPVER="v5.0.4 / 09-13 18:15";
+const VER="V5.0.5";
+const APPVER=VER+" / 09-13 19:40";
 const LS={repo:"kv_repo",token:"kv_token",picks:"derby_picks",theme:"derby_theme"};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
@@ -234,6 +252,7 @@ function badge(num,heads,small){
   return `<span class="num${small?" s":""}" style="background:${bg};color:${fg};border-color:${bd}">${esc(num)}</span>`;
 }
 $("silks").innerHTML=WAKU.slice(1).map(w=>`<i style="background:${w[0]}"></i>`).join("");
+$("vtag").textContent=VER;
 
 function minsTo(hhmm){
   if(!hhmm)return null;
@@ -260,6 +279,12 @@ function headsOf(place){const r=(IDX&&IDX.races||[]).find(x=>x.place===place);re
 function ridOf(place){const r=(IDX&&IDX.races||[]).find(x=>x.place===place);return r?r.race_id:null;}
 
 /* ---------- ホーム ---------- */
+/* 展開＝前残り率を4段階へ写像する。左(0)が前、右(3)が後。脚質の並び（逃先差追）と向きを揃える */
+const TKLAB=["前","やや前","やや後","後"];
+function tkband(v){
+  if(v==null)return null;
+  if(v>=0.60)return 0; if(v>=0.40)return 1; if(v>=0.20)return 2; return 3;
+}
 function tenkaiLine(){
   const t=TODAY&&TODAY.tenkai; if(!t||!t.courses||!t.courses.length)return "まだ決着した鞍がありません。";
   const done=t.courses.filter(c=>c.fin>0); if(!done.length)return "まだ決着した鞍がありません。";
@@ -342,10 +367,16 @@ function drawHome(){
     <div class="mini">直近5走の最速上がり3F。出所は馬カードに出る。</div></details>`);
   const cs=(TODAY.tenkai&&TODAY.tenkai.courses)||[];
   h.push(`<details><summary>展開（コース別）<span class="c">${cs.length}区分</span></summary>
-    ${cs.map(c=>`<div class="mrow"><span class="mt">${esc(c.ba)}</span>
-      <span class="mg">${esc(c.label)}</span>
-      <span class="mv">平常${Math.round(c.base*100)}%${c.fin?` → 今日${Math.round(c.today*100)}%（${c.fin}鞍）`:""}</span></div>`).join("")}
-    <div class="mini">前残り率＝3着以内に逃げ・先行が2頭以上入った割合。平常値は当日を除く全期間。</div></details>`);
+    ${cs.map(c=>{
+      const bb=tkband(c.base), tb=c.fin?tkband(c.today):null;
+      const seg=[0,1,2,3].map(i=>`<i class="${tb===i?"on":""}${bb===i?" base":""}"></i>`).join("");
+      return `<div class="tkrow"><span class="tkg"><b>${esc(c.label)}</b>
+        <span class="s">${c.fin?`今日 ${c.fin}鞍`:"今日はまだ決着なし"}${bb!=null?`・平常は${TKLAB[bb]}`:""}</span></span>
+        <span class="gauge">${seg}</span>
+        <span class="tklab">${tb!=null?TKLAB[tb]:"—"}</span></div>`;
+    }).join("")}
+    <div class="mini">左ほど前（逃げ・先行が残る）、右ほど後（差し・追込が決まる）。塗りが今日で、丸が平常の位置。
+      3着以内に逃げ・先行が2頭以上入ったかで数えているので、鞍数の少ない区分は大きく振れます。</div></details>`);
   /* 全レース＝軸・騎手・人気・単勝オッズ・床（allracesが無い旧データは鞍一覧で代替） */
   const arace=(TODAY.allraces&&TODAY.allraces.length)?TODAY.allraces:null;
   h.push(`<details><summary>全レース<span class="c">${(arace||(IDX&&IDX.races)||[]).length}鞍</span></summary>
@@ -353,7 +384,7 @@ function drawHome(){
       <span class="time">${esc(r.time)}</span>
       <div class="g"><div class="g1">${esc(r.place)} ${esc(r.name)}</div>
         <div class="g2">${r.hs1num
-          ? `軸 ${badge(r.hs1num,r.heads,true)} ${esc(r.hs1name)}${r.jk?`・${esc(r.jk)}`:""}`
+          ? `${badge(r.hs1num,r.heads,true)}${esc(r.hs1name)}${r.jk?`　${esc(r.jk)}`:""}`
           : `${esc(r.course)}・${esc(r.heads)}頭`}</div></div>
       ${r.pop||r.odds!=null
         ? `<span class="pv"><b>${r.pop?esc(r.pop)+"人":""} ${r.odds!=null?esc(r.odds):""}</b>
