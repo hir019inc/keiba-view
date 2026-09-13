@@ -7,12 +7,14 @@
   --bg:#f2f2f7; --card:#fff; --card2:#f7f7f9; --fg:#000; --fg2:#3c3c43; --sub:#8a8a8e;
   --sep:rgba(60,60,67,.17); --accent:#1c4587; --accent2:#3b6fc4; --accent-l:#eaf0fa;
   --fill:#e9e9eb; --gold:#b8860b; --gold-l:#fff6e0; --green:#1a7f4b; --green-l:#e4f4ea;
+  --red:#b3261e; --red-l:#fde8e4;
   --hdr:rgba(242,242,247,.82); --shadow:0 1px 2px rgba(0,0,0,.05),0 0 0 .5px rgba(0,0,0,.04);
 }
 [data-theme="dark"]{
   --bg:#000; --card:#1c1c1e; --card2:#2c2c2e; --fg:#fff; --fg2:#ebebf5; --sub:#8e8e93;
   --sep:rgba(84,84,88,.65); --accent:#5b8dd9; --accent2:#7aa6e4; --accent-l:#1b2a44;
   --fill:#2c2c2e; --gold:#e0b44c; --gold-l:#3a2f14; --green:#4cd07d; --green-l:#16351f;
+  --red:#ff9d90; --red-l:#3a1712;
   --hdr:rgba(0,0,0,.72); --shadow:0 0 0 .5px rgba(255,255,255,.07);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -25,12 +27,17 @@ body{margin:0;background:var(--bg);color:var(--fg);
 header{position:sticky;top:0;z-index:30;background:var(--hdr);
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
   border-bottom:.5px solid var(--sep)}
-.hrow{max-width:620px;margin:0 auto;padding:9px 16px;display:flex;align-items:center;gap:10px;min-height:46px}
-.back{flex:0 0 auto;display:flex;align-items:center;gap:3px;color:var(--accent);font-size:16px;
-  font-weight:500;text-decoration:none;letter-spacing:-.02em;background:none;border:0;padding:0;cursor:pointer}
+.hrow{max-width:620px;margin:0 auto;padding:9px 16px;display:flex;align-items:center;gap:9px;min-height:48px}
+.brand{display:flex;align-items:center;gap:9px;flex:1 1 auto;min-width:0}
+.silks{display:inline-flex;height:17px;border-radius:3px;overflow:hidden;flex:0 0 auto;
+  box-shadow:0 0 0 .5px var(--sep)}
+.silks i{width:5px;height:100%;display:block}
+.wm{font-size:15.5px;font-weight:800;letter-spacing:.1em;white-space:nowrap}
+.back{flex:0 0 auto;display:flex;align-items:center;gap:3px;color:var(--accent2);font-size:16px;
+  font-weight:600;letter-spacing:-.02em;background:none;border:0;padding:0;cursor:pointer}
 .back svg{width:11px;height:18px;display:block}
 .ttl{flex:1 1 auto;min-width:0;font-size:16px;font-weight:700;letter-spacing:-.02em;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lab{flex:0 0 auto;font-size:13px;font-weight:700;color:#fff;background:var(--accent);
   border-radius:99px;padding:5px 13px;text-decoration:none}
 .tgl{flex:0 0 auto;width:32px;height:32px;border-radius:99px;border:0;background:var(--fill);
@@ -45,6 +52,7 @@ h1.big{font-size:32px;font-weight:800;letter-spacing:-.04em;margin:18px 2px 2px;
 .pk+.pk::before{content:"";position:absolute;top:0;left:19px;right:0;height:.5px;background:var(--sep)}
 .pk::after{content:"";position:absolute;left:0;top:12px;bottom:12px;width:3.5px;border-radius:0 3px 3px 0;background:var(--gold)}
 .pk.miokuri::after{background:var(--sub);opacity:.45}
+.pk.kau::after{background:var(--green)}
 .pk:active{background:var(--card2)}
 .pk .t{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .pk .t b{font-size:16.5px;font-weight:700;letter-spacing:-.025em}
@@ -54,15 +62,12 @@ h1.big{font-size:32px;font-weight:800;letter-spacing:-.04em;margin:18px 2px 2px;
 .t-kau{background:var(--green-l);color:var(--green)}
 .t-miokuri{background:var(--fill);color:var(--sub)}
 .marks{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
-.mark{display:flex;align-items:center;gap:5px;background:var(--gold-l);border-radius:8px;
-  padding:4px 9px 4px 6px;font-size:12px;font-weight:600}
-.mark .mn{background:var(--gold);color:#fff;border-radius:5px;min-width:19px;height:19px;
-  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+.mark{display:flex;align-items:center;gap:6px;background:var(--card2);border-radius:9px;
+  padding:4px 9px 4px 5px;font-size:12.5px;font-weight:600;border:.5px solid var(--sep)}
 .mark .mx{color:var(--sub);font-weight:500;font-size:11.5px}
 .cd{flex:0 0 auto;font-size:12.5px;font-weight:700;color:var(--accent2);font-variant-numeric:tabular-nums;
   background:var(--accent-l);border-radius:7px;padding:3px 8px;margin-left:auto}
-.cd.soon{background:#fde8e4;color:#b3261e}
-[data-theme="dark"] .cd.soon{background:#3a1712;color:#ff9d90}
+.cd.soon{background:var(--red-l);color:var(--red)}
 .cd.done{background:var(--fill);color:var(--sub)}
 .row{display:flex;align-items:center;gap:11px;padding:14px 16px;position:relative;cursor:pointer}
 .row+.row::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
@@ -91,8 +96,7 @@ h1.big{font-size:32px;font-weight:800;letter-spacing:-.04em;margin:18px 2px 2px;
 .res{margin-top:15px;background:linear-gradient(160deg,var(--accent),var(--accent2));border-radius:14px;
   padding:16px 17px;color:#fff}
 .res .cap{font-size:12px;font-weight:700;opacity:.85}
-.res .big{font-size:34px;font-weight:800;letter-spacing:-.05em;font-variant-numeric:tabular-nums;line-height:1.05}
-.res .big span{font-size:16px;font-weight:700;opacity:.9}
+.res .big{font-size:22px;font-weight:800;letter-spacing:-.04em;line-height:1.2;margin-top:2px}
 .res .sm{font-size:12.5px;margin-top:9px;line-height:1.6;opacity:.92}
 .hr{display:flex;align-items:center;gap:10px;padding:12px 16px;position:relative;cursor:pointer}
 .hr+.hr::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
@@ -101,24 +105,35 @@ h1.big{font-size:32px;font-weight:800;letter-spacing:-.04em;margin:18px 2px 2px;
 .num{flex:0 0 auto;width:27px;height:27px;border-radius:8px;display:flex;align-items:center;
   justify-content:center;font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;
   border:1px solid transparent}
+.num.s{width:22px;height:22px;font-size:11.5px;border-radius:6px}
 .hn{font-size:15.5px;font-weight:700;letter-spacing:-.025em;flex:0 0 auto}
 .hm{font-size:12.5px;color:var(--sub);flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;font-variant-numeric:tabular-nums}
 .hsb{flex:0 0 auto;font-size:11.5px;font-weight:800;color:var(--accent2);background:var(--accent-l);
   border-radius:6px;padding:3px 7px;font-variant-numeric:tabular-nums}
-.sig{display:inline-block;font-size:10.5px;font-weight:800;background:var(--gold-l);color:var(--gold);
-  border-radius:5px;padding:1px 6px;margin-left:6px}
 .pin{flex:0 0 auto;color:var(--gold);font-size:14px}
 .bias{display:flex;gap:9px}
 .bias div{flex:1 1 0;background:var(--card2);border-radius:12px;padding:11px 8px;text-align:center}
 .bias .v{font-size:18px;font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
 .bias .k{font-size:11px;color:var(--sub);line-height:1.4;margin-top:3px}
-details{background:var(--card);border-radius:16px;margin:0 0 16px;overflow:hidden;box-shadow:var(--shadow)}
-summary{cursor:pointer;list-style:none;padding:16px;font-size:15.5px;font-weight:700;
-  display:flex;align-items:center;justify-content:space-between}
+.pickbtn{width:100%;margin-top:12px;padding:12px;border-radius:12px;border:0;font:inherit;font-size:15px;
+  font-weight:800;cursor:pointer;background:var(--gold-l);color:var(--gold)}
+.pickbtn.on{background:var(--gold);color:#fff}
+details{background:var(--card);border-radius:16px;margin:0 0 10px;overflow:hidden;box-shadow:var(--shadow)}
+summary{cursor:pointer;list-style:none;padding:15px 16px;font-size:15px;font-weight:700;
+  display:flex;align-items:center;justify-content:space-between;gap:8px}
 summary::-webkit-details-marker{display:none}
+summary .c{font-weight:500;color:var(--sub);font-size:12.5px;margin-left:auto;margin-right:4px}
 summary::after{content:"⌄";color:var(--sub);font-size:18px;font-weight:700;transform:translateY(-3px)}
 details[open] summary::after{content:"⌃";transform:translateY(3px)}
+.mini{font-size:12.5px;color:var(--sub);padding:0 16px 14px;line-height:1.6}
+.mrow{display:flex;align-items:center;gap:9px;padding:10px 16px;position:relative;cursor:pointer}
+.mrow+.mrow::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
+.mrow .mt{flex:0 0 42px;font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums}
+.mrow .mg{flex:1 1 auto;min-width:0;font-size:13.5px;font-weight:600;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.mrow .mv{flex:0 0 auto;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.mv.down{color:var(--green)} .mv.up{color:var(--red)}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-end;z-index:60;
   -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 .modal.on{display:flex}
@@ -144,7 +159,7 @@ details[open] summary::after{content:"⌃";transform:translateY(3px)}
 .btns button.fill{background:var(--accent);color:#fff}
 .btns button:active{opacity:.7}
 .err{background:var(--card);border-radius:16px;padding:16px;box-shadow:var(--shadow);font-size:14px;line-height:1.7}
-.err b{color:#b3261e}
+.err b{color:var(--red)}
 .setup input{width:100%;border:.5px solid var(--sep);border-radius:10px;padding:11px;font-size:15px;
   margin-top:8px;background:var(--card2);color:var(--fg);font-family:inherit}
 .hide{display:none}
@@ -152,10 +167,11 @@ details[open] summary::after{content:"⌃";transform:translateY(3px)}
 </style></head><body>
 
 <header><div class="hrow">
+  <div class="brand" id="brand"><span class="silks" id="silks"></span><span class="wm">D.E.R.B.Y.</span></div>
   <button class="back hide" id="backb" onclick="go('home')">
     <svg viewBox="0 0 11 18" fill="none"><path d="M9.5 1L2 9l7.5 8" stroke="currentColor" stroke-width="2.2"
       stroke-linecap="round" stroke-linejoin="round"/></svg>ホーム</button>
-  <span class="ttl" id="ttl">D.E.R.B.Y.</span>
+  <span class="ttl hide" id="ttl"></span>
   <a class="lab hide" id="labbtn" href="#" target="_blank" rel="noopener">ラボ</a>
   <button class="tgl" id="tgl" onclick="toggleTheme()" aria-label="表示切替">☾</button>
 </div></header>
@@ -170,14 +186,12 @@ const LS={repo:"kv_repo",token:"kv_token",picks:"derby_picks",theme:"derby_theme
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 
-/* ---------- theme ---------- */
 function applyTheme(t){document.documentElement.setAttribute("data-theme",t);
   $("tgl").textContent=t==="dark"?"☀":"☾";try{localStorage.setItem(LS.theme,t)}catch(e){}}
 function toggleTheme(){applyTheme(document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark");}
 (function(){let t=null;try{t=localStorage.getItem(LS.theme)}catch(e){}
   if(!t)t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";applyTheme(t);})();
 
-/* ---------- data ---------- */
 async function fetchDoc(path){
   try{const r=await fetch("../"+path,{cache:"no-store"});if(r.ok)return await r.text();}catch(e){}
   const repo=localStorage.getItem(LS.repo),token=localStorage.getItem(LS.token);
@@ -194,7 +208,7 @@ let TODAY=null, IDX=null, PACK=null, PICKS=[];
 try{PICKS=JSON.parse(localStorage.getItem(LS.picks)||"[]")}catch(e){PICKS=[]}
 const savePicks=()=>{try{localStorage.setItem(LS.picks,JSON.stringify(PICKS))}catch(e){}};
 
-/* ---------- 枠色（既存ビューアと同一） ---------- */
+/* 枠色（既存ビューアと同一） */
 const WAKU=[null,["#ffffff","#333","#9aa1ab"],["#222222","#fff","#222"],["#e63946","#fff","#e63946"],
   ["#1d6fd6","#fff","#1d6fd6"],["#f6d32d","#333","#e3bd0e"],["#2e9e4f","#fff","#2e9e4f"],
   ["#f28c28","#fff","#f28c28"],["#f4a7c3","#333","#eb8fb2"]];
@@ -206,11 +220,12 @@ function waku(num,heads){
   for(let f=1;f<=8;f++){cum+=base+(f>8-rem?1:0);if(num<=cum)return f;}
   return 8;
 }
-function badge(num,heads){
-  const [bg,fg,bd]=WAKU[waku(num,heads)]||["var(--accent)","#fff","transparent"];
-  return `<span class="num" style="background:${bg};color:${fg};border-color:${bd}">${esc(num)}</span>`;
+function badge(num,heads,small){
+  const [bg,fg,bd]=WAKU[waku(num,heads)]||["var(--fill)","var(--fg)","transparent"];
+  return `<span class="num${small?" s":""}" style="background:${bg};color:${fg};border-color:${bd}">${esc(num)}</span>`;
 }
-/* ---------- 時刻 ---------- */
+$("silks").innerHTML=WAKU.slice(1).map(w=>`<i style="background:${w[0]}"></i>`).join("");
+
 function minsTo(hhmm){
   if(!hhmm)return null;
   const m=String(hhmm).match(/(\d{1,2}):(\d{2})/); if(!m)return null;
@@ -231,44 +246,53 @@ function labUrl(place,date){
   if(!v||d.length!==8)return "";
   return `https://www.keibalab.jp/db/race/${d}${v}${String(m[2]).padStart(2,"0")}/`;
 }
+function timeOf(place){const r=(IDX&&IDX.races||[]).find(x=>x.place===place);return r?r.time:null;}
+function headsOf(place){const r=(IDX&&IDX.races||[]).find(x=>x.place===place);return r?r.heads:16;}
+function ridOf(place){const r=(IDX&&IDX.races||[]).find(x=>x.place===place);return r?r.race_id:null;}
 
 /* ---------- ホーム ---------- */
 function tenkaiLine(){
-  const t=TODAY&&TODAY.tenkai; if(!t||!t.courses||!t.courses.length)return "";
-  const done=t.courses.filter(c=>c.fin>0);
-  if(!done.length)return "まだ決着した鞍がありません。";
-  const byBa={};
-  done.forEach(c=>{const k=c.ba+c.surf;byBa[k]=byBa[k]||{f:0,n:0};byBa[k].f+=c.front;byBa[k].n+=c.fin;});
-  return Object.keys(byBa).map(k=>{const b=byBa[k];
-    return `${k} 前残り <b>${Math.round(b.f/b.n*100)}%</b>（${b.n}鞍）`;}).join("　/　");
+  const t=TODAY&&TODAY.tenkai; if(!t||!t.courses||!t.courses.length)return "まだ決着した鞍がありません。";
+  const done=t.courses.filter(c=>c.fin>0); if(!done.length)return "まだ決着した鞍がありません。";
+  const by={};
+  done.forEach(c=>{const k=c.ba+c.surf;by[k]=by[k]||{f:0,n:0};by[k].f+=c.front;by[k].n+=c.fin;});
+  return Object.keys(by).map(k=>`${k} 前残り <b>${Math.round(by[k].f/by[k].n*100)}%</b>（${by[k].n}鞍）`).join("　/　");
+}
+function mrow(place,time,inner,val,cls){
+  const rid=ridOf(place);
+  return `<div class="mrow" ${rid?`onclick="openRace('${rid}')"`:""}>
+    <span class="mt">${esc(time||"")}</span><span class="mg">${inner}</span>
+    ${val?`<span class="mv ${cls||""}">${esc(val)}</span>`:""}</div>`;
 }
 function drawHome(){
   const nerai=(TODAY.nerai||[]);
-  const myomi=nerai.find(n=>/妙味/.test(n.label))||nerai.find(n=>n.key==="myomi");
-  /* 発走前の鞍を優先。すべて終わっている日は全件を出す（後から見返せるように） */
+  const myomi=nerai.find(n=>/妙味/.test(n.label))||nerai[nerai.length-1];
   const all=(myomi&&myomi.races)||[];
   const up=all.filter(r=>{const m=minsTo(timeOf(r.place));return m===null||m>=-5;});
   const races=up.length?up:all;
+  const od=TODAY.odds||{}, al=TODAY.alerts||[], ck=(TODAY.chokyo&&TODAY.chokyo.a)||[], ag=TODAY.agari||[];
   const h=[];
-  h.push(`<h1 class="big">今日</h1><div class="date">${esc(TODAY.date)}・${esc((TODAY.venues||[]).join("／"))}</div>`);
+  h.push(`<h1 class="big">今日</h1><div class="date">${esc(TODAY.date)}・${esc((TODAY.venues||[]).join("／"))}・${esc(TODAY.races||"")}鞍</div>`);
   h.push(`<div class="card"><div class="inner"><div class="sum">${tenkaiLine()}</div>
     <div class="stats">
-      <div class="stat"><div class="v">${TODAY.races||"-"}</div><div class="k">今日の鞍数</div></div>
-      <div class="stat"><div class="v">${(TODAY.alerts||[]).length}</div><div class="k">大穴アラート</div></div>
-      <div class="stat"><div class="v">${((TODAY.chokyo&&TODAY.chokyo.a)||[]).length}</div><div class="k">調教A</div></div>
+      <div class="stat"><div class="v">${al.length}</div><div class="k">大穴アラート</div></div>
+      <div class="stat"><div class="v">${ck.length}</div><div class="k">調教A</div></div>
+      <div class="stat"><div class="v">${races.length}</div><div class="k">妙味の鞍</div></div>
     </div></div></div>`);
+
   h.push(`<div class="sec">ピック <span class="cnt">${PICKS.length}件</span></div>`);
-  h.push(`<div class="card">${PICKS.length?PICKS.map((p,i)=>`
-    <div class="pk ${p.state==="見送り"?"miokuri":""}" onclick="openRace('${esc(p.race_id)}')">
+  h.push(`<div class="card">${PICKS.length?PICKS.map(p=>`
+    <div class="pk ${p.state==="見送り"?"miokuri":p.state==="買う"?"kau":""}" onclick="openRace('${esc(p.race_id)}')">
       <div class="t"><b>${esc(p.title)}</b>
         <span class="tag ${p.state==="買う"?"t-kau":p.state==="見送り"?"t-miokuri":"t-kentou"}">${esc(p.state)}</span>
         ${cdHtml(p.time)}</div>
       ${p.memo?`<div class="m">${esc(p.memo)}</div>`:""}
       ${(p.marks||[]).length?`<div class="marks">${p.marks.map(m=>
-        `<span class="mark"><span class="mn">${esc(m.num)}</span>${esc(m.name)}
+        `<span class="mark">${badge(m.num,m.heads||16,true)}${esc(m.name)}
          ${m.note?`<span class="mx">${esc(m.note)}</span>`:""}</span>`).join("")}</div>`:""}
     </div>`).join(""):`<div class="inner" style="color:var(--sub);font-size:13.5px">
-      鞍ビューや馬カードの★で、気になる鞍と馬をここに置けます。</div>`}</div>`);
+      鞍ビューの「★ この鞍をピック」か、馬カードの★でここに溜まります。</div>`}</div>`);
+
   h.push(`<div class="sec">妙味 <span class="cnt">${myomi?esc(myomi.cond):""}</span></div>`);
   h.push(`<div class="card">${races.length?races.map(r=>`
     <div class="row" onclick="openRaceByPlace('${esc(r.place)}')">
@@ -276,22 +300,50 @@ function drawHome(){
       <div class="g"><div class="g1">${esc(r.place)} ${esc(r.name)}</div>
         <div class="g2">${esc(r.course)}・${esc(r.heads)}頭／軸 ${esc(r.hs1num)}番（${esc(r.pop)}人）gap${esc(r.gap)}</div></div>
       <span class="pv"><b>${esc(r.value)}倍</b><i>${esc(myomi.vlabel||"")}</i></span><span class="chev">›</span>
-    </div>`).join(""):`<div class="inner" style="color:var(--sub);font-size:13.5px">該当なし（発走前の鞍）</div>`}</div>`);
-  h.push(`<details><summary>朝の材料</summary><div class="card" style="box-shadow:none;margin:0">
+    </div>`).join(""):`<div class="inner" style="color:var(--sub);font-size:13.5px">該当なし</div>`}</div>`);
+
+  /* ---- 材料（従来のTODAYの中身） ---- */
+  h.push(`<div class="sec">材料</div>`);
+  h.push(`<details><summary>オッズの動き<span class="c">支持増${(od.down||[]).length}・支持減${(od.up||[]).length}</span></summary>
+    ${(od.down||[]).slice(0,8).map(x=>mrow(x.place,x.time,
+      `${badge(x.num,x.heads,true)} ${esc(x.place)}`,`${x.o0}→${x.o1}（${x.pct}%）`,"down")).join("")}
+    ${(od.up||[]).slice(0,5).map(x=>mrow(x.place,x.time,
+      `${badge(x.num,x.heads,true)} ${esc(x.place)}`,`${x.o0}→${x.o1}（+${Math.abs(x.pct)}%）`,"up")).join("")}
+    <div class="mini">オッズが下がった＝支持が増えた。最終4-9番人気で支持が強く増えた馬は複勝1.4-1.6倍（144鞍の実測）。</div>
+  </details>`);
+  h.push(`<details><summary>大穴アラート<span class="c">${al.length}頭</span></summary>
+    ${al.slice(0,14).map(x=>mrow(x.place,x.time,
+      `${badge(x.num,x.heads,true)} ${esc(x.name)} <span style="color:var(--sub);font-weight:500">${esc(x.place)}・${esc(x.pop)}人</span>`,
+      `HS${x.rank}位`)).join("")}
+    <div class="mini">HS7位以内 × 8番人気以下。買え指示ではなく、相手を考える材料。</div></details>`);
+  h.push(`<details><summary>調教A<span class="c">${ck.length}頭</span></summary>
+    ${ck.map(x=>mrow(x.place,x.time,
+      `${badge(x.num,x.heads,true)} ${esc(x.name)} <span style="color:var(--sub);font-weight:500">${esc(x.place)}</span>`,
+      esc(x.tanpyo||""))).join("")||`<div class="mini">該当なし</div>`}</details>`);
+  h.push(`<details><summary>上がり上位<span class="c">${ag.length}頭</span></summary>
+    ${ag.slice(0,14).map(x=>mrow(x.place,x.time,
+      `${badge(x.num,x.heads,true)} ${esc(x.name)} <span style="color:var(--sub);font-weight:500">${esc(x.place)}・${esc(x.style)}</span>`,
+      esc(x.val))).join("")}
+    <div class="mini">直近5走の最速上がり3F。出所は馬カードに出る。</div></details>`);
+  const cs=(TODAY.tenkai&&TODAY.tenkai.courses)||[];
+  h.push(`<details><summary>展開（コース別）<span class="c">${cs.length}区分</span></summary>
+    ${cs.map(c=>`<div class="mrow"><span class="mt">${esc(c.ba)}</span>
+      <span class="mg">${esc(c.label)}</span>
+      <span class="mv">平常${Math.round(c.base*100)}%${c.fin?` → 今日${Math.round(c.today*100)}%（${c.fin}鞍）`:""}</span></div>`).join("")}
+    <div class="mini">前残り率＝3着以内に逃げ・先行が2頭以上入った割合。平常値は当日を除く全期間。</div></details>`);
+  h.push(`<details><summary>全レース</summary>
     ${(IDX&&IDX.races||[]).map(r=>`<div class="row" onclick="openRace('${esc(r.race_id)}')">
       <span class="time">${esc(r.time)}</span>
       <div class="g"><div class="g1">${esc(r.place)} ${esc(r.name)}</div>
         <div class="g2">${esc(r.course)}・${esc(r.heads)}頭</div></div>
-      ${cdHtml(r.time)}<span class="chev">›</span></div>`).join("")}
-    </div></details>`);
+      ${cdHtml(r.time)}<span class="chev">›</span></div>`).join("")}</details>`);
   $("homebody").innerHTML=h.join("");
   $("homeload").classList.add("hide");
 }
-function timeOf(place){const r=(IDX&&IDX.races||[]).find(x=>x.place===place);return r?r.time:null;}
 function openRaceByPlace(place){
-  const r=(IDX&&IDX.races||[]).find(x=>x.place===place);
-  if(!r){alert("この鞍のP2データがまだありません");return;}
-  openRace(r.race_id);
+  const rid=ridOf(place);
+  if(!rid){alert("この鞍のデータがまだありません");return;}
+  openRace(rid);
 }
 
 /* ---------- 鞍ビュー ---------- */
@@ -302,24 +354,32 @@ async function openRace(rid){
   catch(e){ $("racebody").innerHTML=`<div class="err"><b>読み込めません</b><br>${esc(e.message)}</div>`; return; }
   drawRace();
 }
-function pickOf(){ return PICKS.find(p=>p.race_id===PACK.race_id); }
+function pickOf(){ return PACK?PICKS.find(p=>p.race_id===PACK.race_id):null; }
+function ensurePick(state){
+  let p=pickOf();
+  if(!p){p={race_id:PACK.race_id,title:`${PACK.venue}${PACK.r}R ${PACK.race_name}`,
+            time:PACK.post_time,heads:PACK.heads,state:state||"検討中",memo:"",marks:[]};PICKS.unshift(p);}
+  return p;
+}
 function drawRace(){
   const place=`${PACK.venue}${PACK.r}`, p=pickOf(), marks=(p&&p.marks)||[];
   const isMk=n=>marks.some(m=>+m.num===+n);
   $("ttl").textContent=`${place}R`;
-  const lu=labUrl(place,PACK.date);
-  const lb=$("labbtn"); if(lu){lb.href=lu;lb.classList.remove("hide");}else lb.classList.add("hide");
-  const t=TODAY&&TODAY.tenkai, cs=(t&&t.courses||[]).find(c=>c.label&&PACK.course&&c.ba===PACK.venue);
+  const lu=labUrl(place,PACK.date), lb=$("labbtn");
+  if(lu){lb.href=lu;lb.classList.remove("hide");}else lb.classList.add("hide");
+  const cs=((TODAY&&TODAY.tenkai&&TODAY.tenkai.courses)||[]).find(c=>c.ba===PACK.venue&&PACK.course&&PACK.course.startsWith(c.surf));
+  const m=minsTo(PACK.post_time);
   const h=[];
   h.push(`<h1 class="big">${esc(place)}R</h1>
-    <div class="date">${esc(PACK.race_name)}・${esc(PACK.post_time)}（${minsTo(PACK.post_time)<0?"発走済み":"あと"+minsTo(PACK.post_time)+"分"}）
-      ・${esc(PACK.course)}${esc(PACK.going||"")}・${esc(PACK.heads)}頭</div>`);
+    <div class="date">${esc(PACK.race_name)}・${esc(PACK.post_time)}（${m===null?"":m<0?"発走済み":"あと"+m+"分"}）・${esc(PACK.course)}${esc(PACK.going||"")}・${esc(PACK.heads)}頭</div>`);
   const pc=PACK.pace||{};
   h.push(`<div class="card"><div class="inner"><div class="bias">
     <div><div class="v">逃${pc.nige||0} 先${pc.sen||0}</div><div class="k">差${pc.sashi||0} 追${pc.oi||0}<br>${esc(pc.guess||"")}寄り</div></div>
     <div><div class="v">${cs?Math.round(cs.base*100)+"%":"—"}</div><div class="k">このコースの<br>平常 前残り</div></div>
     <div><div class="v">${cs&&cs.fin?Math.round(cs.today*100)+"%":"—"}</div><div class="k">今日の同条件<br>（${cs?cs.fin:0}鞍）</div></div>
-  </div></div></div>`);
+  </div>
+  <button class="pickbtn ${p?"on":""}" onclick="togglePick()">${p?"★ ピック中（外す）":"★ この鞍をピック"}</button>
+  </div></div>`);
   h.push(`<div class="sec">馬 <span class="cnt">タップで詳細・★で注目</span></div><div class="card">`);
   h.push((PACK.horses||[]).slice().sort((a,b)=>(a.hsr||99)-(b.hsr||99)).map(hh=>`
     <div class="hr ${isMk(hh.num)?"picked":""}" onclick="openM(${hh.num})">
@@ -338,8 +398,6 @@ function drawRace(){
       <button onclick="setK('wide',this)">買い目広め</button>
     </div>
     <div class="res" id="kres"></div>
-    <div style="font-size:12px;color:var(--sub);margin-top:12px;line-height:1.6">
-      ★で注目した馬から組み立てます。オッズは三連複オッズの取得済みぶんだけ表示します。</div>
   </div></div>`);
   h.push(`<div class="sec">この鞍のメモ</div><div class="card"><div class="inner">
     <textarea class="memo" id="rmemo" rows="2" placeholder="なぜ気になるか">${esc(p?p.memo:"")}</textarea>
@@ -351,26 +409,29 @@ function drawRace(){
   $("racebody").innerHTML=h.join("");
   setK("one",document.querySelector("#depth button"));
 }
+function togglePick(){
+  const p=pickOf();
+  if(p&&!(p.marks||[]).length&&!p.memo){ PICKS.splice(PICKS.indexOf(p),1); }
+  else if(p){ if(!confirm("注目馬とメモも消えます。ピックを外しますか？"))return; PICKS.splice(PICKS.indexOf(p),1); }
+  else ensurePick("検討中");
+  savePicks(); drawRace(); drawHome();
+}
 function setState(s){
-  const place=`${PACK.venue}${PACK.r}`;
-  let p=pickOf();
-  if(!p){p={race_id:PACK.race_id,title:`${place}R ${PACK.race_name}`,time:PACK.post_time,state:s,memo:"",marks:[]};PICKS.unshift(p);}
-  p.state=s; p.memo=($("rmemo")&&$("rmemo").value||"").trim();
-  savePicks(); drawHome(); alert(`「${s}」で保存しました`);
+  const p=ensurePick(s);
+  p.state=s; p.memo=($("rmemo")&&$("rmemo").value||"").trim(); p.heads=PACK.heads;
+  savePicks(); drawRace(); drawHome();
 }
 function setK(k,btn){
   document.querySelectorAll("#depth button").forEach(b=>b.classList.remove("on"));
   if(btn)btn.classList.add("on");
   const p=pickOf(), marks=(p&&p.marks)||[];
-  const names=marks.map(m=>`${m.num}番`).join("・")||"（★で馬を選ぶ）";
+  const names=marks.length?marks.map(m=>`${m.num}番 ${m.name}`).join(" ／ "):"★で注目した馬がここに並びます";
   const txt={one:["一点勝負","狙いを1点に置く形。3連複1点か単勝。"],
              two:["2頭絞り込み","馬連、または3連複2頭軸。"],
              wide:["買い目広め","3連複のF型・BOX。消去法で構える時。"]}[k];
-  $("kres").innerHTML=`<div class="cap">${txt[0]}</div>
-    <div class="big" style="font-size:20px">${esc(names)}</div>
-    <div class="sm">${txt[1]}<br>三連複オッズの実値は、取得できている鞍で表示します（このモック段階では未接続）。</div>`;
+  $("kres").innerHTML=`<div class="cap">${txt[0]}</div><div class="big">${esc(names)}</div>
+    <div class="sm">${txt[1]}</div>`;
 }
-/* ---------- 馬カード ---------- */
 function openM(num){
   const h=(PACK.horses||[]).find(x=>+x.num===+num); if(!h)return;
   const p=pickOf(), mk=(p&&p.marks||[]).find(m=>+m.num===+num);
@@ -400,13 +461,11 @@ function openM(num){
 }
 function mark(num){
   const h=(PACK.horses||[]).find(x=>+x.num===+num);
-  const place=`${PACK.venue}${PACK.r}`;
-  let p=pickOf();
-  if(!p){p={race_id:PACK.race_id,title:`${place}R ${PACK.race_name}`,time:PACK.post_time,state:"検討中",memo:"",marks:[]};PICKS.unshift(p);}
+  const p=ensurePick("検討中");
   const i=p.marks.findIndex(m=>+m.num===+num);
   const note=($("hmemo")&&$("hmemo").value||"").trim();
   if(i>=0)p.marks.splice(i,1);
-  else p.marks.push({num:h.num,name:h.name,note:note||`HS${h.hsr}位・${h.pop}人気`});
+  else p.marks.push({num:h.num,name:h.name,heads:PACK.heads,note:note||`HS${h.hsr}位・${h.pop}人気`});
   savePicks(); closeM(); drawRace(); drawHome();
 }
 function closeM(){$("modal").classList.remove("on");}
@@ -414,11 +473,12 @@ function go(v){
   const home=v==="home";
   $("v-home").classList.toggle("hide",!home);
   $("v-race").classList.toggle("hide",home);
+  $("brand").classList.toggle("hide",!home);
   $("backb").classList.toggle("hide",home);
-  if(home){$("labbtn").classList.add("hide");$("ttl").textContent="D.E.R.B.Y.";}
+  $("ttl").classList.toggle("hide",home);
+  if(home)$("labbtn").classList.add("hide");
   window.scrollTo(0,0);
 }
-/* ---------- 起動 ---------- */
 (async()=>{
   try{
     TODAY=JSON.parse(await fetchDoc("00_published/TODAY.json"));
