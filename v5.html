@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
 <title>D.E.R.B.Y.</title>
 <style>
 :root{
@@ -167,6 +169,8 @@ details[open] summary::after{content:"⌃";transform:translateY(3px)}
   margin-top:8px;background:var(--card2);color:var(--fg);font-family:inherit}
 .hide{display:none}
 .load{color:var(--sub);font-size:14px;padding:24px 4px}
+/* 端末に届いている版を判別できるように（Pagesは10分のキャッシュが付くため） */
+.verline{font-size:11px;color:var(--sub);text-align:center;padding:22px 0 6px;letter-spacing:.02em}
 </style></head><body>
 
 <header><div class="hrow">
@@ -185,6 +189,8 @@ details[open] summary::after{content:"⌃";transform:translateY(3px)}
 
 <script>
 "use strict";
+/* ★画面に出す版。更新が端末に届いたかを利用者が判別できるようにする（2026-09-13） */
+const APPVER="v5.0.4 / 09-13 18:15";
 const LS={repo:"kv_repo",token:"kv_token",picks:"derby_picks",theme:"derby_theme"};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
@@ -354,6 +360,7 @@ function drawHome(){
              <i>床 ${r.floor!=null?esc(r.floor)+"倍":"—"}</i></span>`
         : cdHtml(r.time)}
       <span class="chev">›</span></div>`).join("")}</details>`);
+  h.push(`<div class="verline">${esc(APPVER)}　データ生成 ${esc(TODAY.generated||"")}</div>`);
   $("homebody").innerHTML=h.join("");
   $("homeload").classList.add("hide");
 }
