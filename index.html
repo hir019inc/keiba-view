@@ -502,7 +502,8 @@ const KATA={B5:{n:5,ax:0,l:"B5"},B6:{n:6,ax:0,l:"B6"},B7:{n:7,ax:0,l:"B7"},
             J2:{n:2,ax:2,l:"2頭軸×ヒモ全"}};
 const KEN=[["sanrenpuku","3連複"],["tan","単勝"],["fuku","複勝"]];
 let SF=null;
-let S={tenkai:"none",tekisei:false,ken:"sanrenpuku",kata:"F6",tanka:100,sel:[],log:[],tenkaiOpen:false};
+let S={tenkai:"none",tekisei:false,ken:"sanrenpuku",kata:"F6",tanka:100,sel:[],log:[],
+       tenkaiOpen:false,memoOpen:false};
 try{S.log=JSON.parse(localStorage.getItem(LS.kaime)||"[]")}catch(e){}
 try{const t=+localStorage.getItem(LS.tanka);if(t>=100)S.tanka=t}catch(e){}
 const saveKaime=()=>{try{localStorage.setItem(LS.kaime,JSON.stringify(S.log));
@@ -546,7 +547,7 @@ function kenshuHint(){
   const ax=hs[0]; if(!ax) return null;
   const gap=(hs.length>1&&ax.hs!=null&&hs[1].hs!=null)?(ax.hs-hs[1].hs):null;
   const pop=ax.pop, heads=PACK.heads||hs.length;
-  const mid=SF?midOdds():null;
+  const mid=SF?midOddsF6():null;   /* ★選択中の券種に依存させない（midOddsF6 の注記を参照） */
   if(pop==null||gap==null) return null;
   if(pop<=3&&gap>=6)
     return {k:"単勝",why:`軸${pop}番人気・gap${gap.toFixed(1)}＝軸が来ると読める帯。実測では同額なら単勝が有利（F6は取り分が薄まる）`};
@@ -560,6 +561,18 @@ function kenshuHint(){
 function midOdds(){
   const {out}=combos(); if(!out||!out.length) return null;
   const os=out.map(c=>oddsOf(...c)).filter(v=>v!=null).sort((a,b)=>a-b);
+  return os.length?os[Math.floor(os.length/2)]:null;
+}
+/* ★券種の推奨に使う配当中央は、いま選んでいる券種に依存させてはいけない（2026-09-13 修正）。
+   midOdds() は combos() 経由で S.ken を見るため、単勝に切り替えると 1点＝3連複のキーが
+   引けず mid=null になり、「配当中央30倍超」の条件が落ちて推奨が単勝へ反転していた。
+   ＝利用者が選んだ券種を、そのまま推奨として返す自己参照になっていた。
+   ここでは常に F6（軸1頭＋相手6頭）で組んだ場合の中央値を返す。 */
+function midOddsF6(){
+  const ord=auto(); if(ord.length<7) return null;
+  const use=ord.slice(0,7).map(h=>h.num), a=use[0], r=use.slice(1), out=[];
+  for(let i=0;i<r.length;i++) for(let j=i+1;j<r.length;j++) out.push([a,r[i],r[j]]);
+  const os=out.map(c=>oddsOf(...c)).filter(v=>v!=null).sort((x,y)=>x-y);
   return os.length?os[Math.floor(os.length/2)]:null;
 }
 const need=()=>{ if(isTanpuku())return 1; const K=KATA[S.kata]; return K.ax===2?2:K.n; };
@@ -690,6 +703,18 @@ function drawRace(keep){
   </div>
   <button class="pickbtn ${p?"on":""}" onclick="togglePick()">${p?"★ ピック中（外す）":"★ この鞍をピック"}</button>
   </div></div>`);
+  /* ★メモは最下部だと使いづらいので上へ（2026-09-13）。畳んでおき、状態と冒頭を見出しに出す。
+     今どの状態かはボタンの塗りで分かるようにした（押した手応えが無いと保存されたか分からない）。 */
+  h.push(`<details ${S.memoOpen?"open":""} ontoggle="S.memoOpen=this.open">
+    <summary>この鞍のメモ<span class="c">${p&&p.state?esc(p.state):"未記録"}${
+      p&&p.memo?"・"+esc(p.memo.slice(0,14))+(p.memo.length>14?"…":""):""}</span></summary>
+    <div style="padding:0 16px 15px">
+      <textarea class="memo" id="rmemo" rows="2" placeholder="なぜ気になるか">${esc(p?p.memo:"")}</textarea>
+      <div class="btns">
+        <button class="${p&&p.state==="検討中"?"fill":""}" onclick="setState('検討中')">検討中</button>
+        <button class="${p&&p.state==="買う"?"fill":""}" onclick="setState('買う')">買う</button>
+        <button class="${p&&p.state==="見送り"?"fill":""}" onclick="setState('見送り')">見送り</button>
+      </div></div></details>`);
   /* 並びは展開の読みで変わるので、リストより先に計算する */
   const ord=auto(), cb=combos(), useN=need();
   /* 展開は最初に一度選ぶだけなので畳んでおく。選択中の値は見出しに出す（開かなくても分かるように） */
@@ -765,13 +790,6 @@ function drawRace(keep){
       <button class="copyall" onclick="copyKaime()">まとめてコピー</button>
       <div class="note">鞍をまたいで貯まります。振り返りへの取り込みはMac側で行います。</div></div></div>`);
   }
-  h.push(`<div class="sec">この鞍のメモ</div><div class="card"><div class="inner">
-    <textarea class="memo" id="rmemo" rows="2" placeholder="なぜ気になるか">${esc(p?p.memo:"")}</textarea>
-    <div class="btns">
-      <button onclick="setState('検討中')">検討中</button>
-      <button onclick="setState('買う')">買う</button>
-      <button onclick="setState('見送り')">見送り</button>
-    </div></div></div>`);
   $("racebody").innerHTML=h.join("");
   /* 差し替え直後はレイアウトが未確定で scrollTo が中途半端に効く。次のフレームまで待つ */
   if(keep) requestAnimationFrame(()=>window.scrollTo(0,_y));
@@ -786,7 +804,8 @@ function togglePick(){
 function setState(s){
   const p=ensurePick(s);
   p.state=s; p.memo=($("rmemo")&&$("rmemo").value||"").trim(); p.heads=PACK.heads;
-  savePicks(); drawRace(); drawHome();
+  /* ★drawRace(true)＝保存のたびに先頭へ飛ぶと「押しても何も起きない」ように見える */
+  savePicks(); drawRace(true); drawHome();
 }
 function openM(num){
   const h=(PACK.horses||[]).find(x=>+x.num===+num); if(!h)return;
