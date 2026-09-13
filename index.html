@@ -515,8 +515,8 @@ const RULE={none:{},mae:{"逃":3,"先":2,"差":-.5,"追":-2},sashi:{"逃":-2,"�
 const KATA={B5:{n:5,ax:0,l:"B5"},B6:{n:6,ax:0,l:"B6"},B7:{n:7,ax:0,l:"B7"},
             F5:{n:6,ax:1,l:"F5"},F6:{n:7,ax:1,l:"F6"},F7:{n:8,ax:1,l:"F7"},
             J2:{n:2,ax:2,l:"2頭軸×ヒモ全"}};
-const KEN=[["sanrenpuku","3連複"],["tan","単勝"],["fuku","複勝"]];
-let SF=null;
+const KEN=[["sanrenpuku","3連複"],["umaren","馬連"],["tan","単勝"],["fuku","複勝"]];
+let SF=null, UM=null;
 let S={tenkai:"none",tekisei:false,ken:"sanrenpuku",kata:"F6",tanka:100,sel:[],log:[],
        tenkaiOpen:false,memoOpen:false};
 try{S.log=JSON.parse(localStorage.getItem(LS.kaime)||"[]")}catch(e){}
@@ -524,9 +524,16 @@ try{const t=+localStorage.getItem(LS.tanka);if(t>=100)S.tanka=t}catch(e){}
 const saveKaime=()=>{try{localStorage.setItem(LS.kaime,JSON.stringify(S.log));
   localStorage.setItem(LS.tanka,String(S.tanka))}catch(e){}};
 const isTanpuku=()=>S.ken==="tan"||S.ken==="fuku";
+const isUmaren=()=>S.ken==="umaren";
 const oddsOf=(a,b,c)=>{ if(!SF)return null;
   const k=[a,b,c].map(Number).sort((x,y)=>x-y).join("-"); const v=SF.odds[k];
   return (v===undefined)?null:v; };
+/* 馬連オッズ（★2026-09-13）。um_<raceId>.json ＝ C(頭数,2) の全組 */
+const umOf=(a,b)=>{ if(!UM)return null;
+  const k=[a,b].map(Number).sort((x,y)=>x-y).join("-"); const v=UM.odds[k];
+  return (v===undefined)?null:v; };
+/* 組の長さで券種を判別する＝呼び出し側が3連複か馬連かを気にしなくて済む */
+const comboOdds=c=> (c && c.length===2) ? umOf(c[0],c[1]) : oddsOf(...c);
 
 /* 穴×適性重視のシグナル。HS順位では相手網の外(8-10位)だが、脚質/騎手/距離帯複勝/前走で
    条件を満たす馬を拾う。★人気馬は外す(4番人気以下)＝穴を拾うのが狙いで堅い相手を増やす操作ではない。
@@ -590,7 +597,9 @@ function midOddsF6(){
   const os=out.map(c=>oddsOf(...c)).filter(v=>v!=null).sort((x,y)=>x-y);
   return os.length?os[Math.floor(os.length/2)]:null;
 }
-const need=()=>{ if(isTanpuku())return 1; const K=KATA[S.kata]; return K.ax===2?2:K.n; };
+/* 馬連は「軸1頭＋相手」の軸流し＝最低2頭。相手は何頭でも足せる（点数＝相手の数） */
+const need=()=>{ if(isTanpuku())return 1; if(isUmaren())return 2;
+  const K=KATA[S.kata]; return K.ax===2?2:K.n; };
 function resetSel(){ S.sel=auto().slice(0,need()).map(h=>h.num); if(PACK)drawRace(true); }
 function topupSel(){ for(const h of auto()){ if(S.sel.length>=need())break;
   if(!S.sel.includes(h.num)) S.sel.push(h.num); } }
@@ -598,6 +607,8 @@ function combos(){
   const K=KATA[S.kata], use=S.sel.slice(0,need()), out=[];
   if(S.sel.length<need()) return {out:[],K,short:need()-S.sel.length};
   if(isTanpuku()) return {out:[[use[0]]],K,short:0};
+  /* 馬連＝1番目を軸に、2番目以降の全部へ流す（need で切らない） */
+  if(isUmaren()) return {out:S.sel.slice(1).map(n=>[S.sel[0],n]),K,short:0};
   if(K.ax===0){ for(let i=0;i<use.length;i++)for(let j=i+1;j<use.length;j++)for(let k=j+1;k<use.length;k++)
                   out.push([use[i],use[j],use[k]]); }
   else if(K.ax===1){ const a=use[0],r=use.slice(1);
@@ -624,6 +635,7 @@ function keepKaime(){
   const n=out.length, unit=Math.max(100,S.tanka||100);
   const kl=KEN.find(k=>k[0]===S.ken)[1];
   const body=isTanpuku()?`${S.sel[0]}番 ${unit.toLocaleString()}円`
+            :isUmaren()?`${S.sel[0]}-${S.sel.slice(1).join(",")} ${n}点×${unit}円`
                         :`${K.l} ${S.sel.slice(0,need()).join("-")} ${n}点×${unit}円`;
   S.log.push(`${PACK.venue}${PACK.r}R ${kl} ${body} `
     +`展開=${TENKAI.find(t=>t[0]===S.tenkai)[1]}${S.tekisei?";穴x適性重視=ON":""}`);
@@ -650,7 +662,7 @@ function kaimeSummary(cb){
       </div><button class="keep" onclick="keepKaime()">買った</button>`;
   }
   const n=out.length;
-  const os=out.map(c=>oddsOf(...c)).filter(v=>v!=null).sort((a,b)=>a-b);
+  const os=out.map(comboOdds).filter(v=>v!=null).sort((a,b)=>a-b);
   const unknown=n-os.length, mid=os.length?os[Math.floor(os.length/2)]:null;
   const safe=os.filter(o=>o>=n).length;
   return `<div class="sum2">
@@ -669,6 +681,7 @@ async function openRace(rid){
   try{ PACK=JSON.parse(await fetchDoc(`00_published/p2/${rid}.json`)); }
   catch(e){ $("racebody").innerHTML=`<div class="err"><b>読み込めません</b><br>${esc(e.message)}</div>`; return; }
   try{ SF=JSON.parse(await fetchDoc(`00_published/p2/sf_${rid}.json`)); }catch(e){ SF=null; }
+  try{ UM=JSON.parse(await fetchDoc(`00_published/p2/um_${rid}.json`)); }catch(e){ UM=null; }
   fillPickJk();
   S.sel=auto().slice(0,need()).map(h=>h.num);   /* 鞍が変わったら選択を組み直す */
   drawRace();
@@ -751,10 +764,13 @@ function drawRace(keep){
      以前は同じ16頭が「馬」と「買い目に使う馬」で2回出ており、鞍ビューの51%を占めていた。
      左の丸＝買い目に入れる／行の本体＝馬カード（詳細）。丸は常に出す（出入りする方が迷うため）。 */
   h.push(`<div class="sec">出走馬 <span class="cnt">${esc(PACK.heads)}頭・${
-    cb.K.ax===1?"丸の1番目が軸":cb.K.ax===2?"丸の1・2番目が軸":"丸の順が優先度"}・${useN}頭を使用</span></div>
+    isUmaren()?`丸の1番目が軸・相手${Math.max(0,S.sel.length-1)}頭`
+    :`${cb.K.ax===1?"丸の1番目が軸":cb.K.ax===2?"丸の1・2番目が軸":"丸の順が優先度"}・${useN}頭を使用`}</span></div>
   <div class="card">${ord.map(hh=>{
-    const i=S.sel.indexOf(hh.num), on=i>=0, used=on&&i<useN;
-    const cls=!on?"":(cb.K.ax&&i<cb.K.ax?"ax":used?"on":"out");
+    const i=S.sel.indexOf(hh.num), on=i>=0;
+    /* 馬連は選んだ全部を使う＝範囲外(out)の概念が無い */
+    const used=isUmaren()?on:(on&&i<useN);
+    const cls=!on?"":(isUmaren()?(i===0?"ax":"on"):(cb.K.ax&&i<cb.K.ax?"ax":used?"on":"out"));
     const mv=hh.moved>0?'<span class="up">▲</span>':hh.moved<0?'<span class="dn">▼</span>':"";
     return `<div class="hr ${isMk(hh.num)?"picked":""}" onclick="openM(${hh.num})">
       <span class="selhit" onclick="event.stopPropagation();tapSel(${hh.num})"
@@ -775,7 +791,9 @@ function drawRace(keep){
     <div class="lb" style="margin-top:0">券種</div>
     <div class="seg">${KEN.map(([k,l])=>
       `<button class="${S.ken===k?"on":""}" onclick="setKen('${k}')">${esc(l)}</button>`).join("")}</div>
-    ${isTanpuku()?`<div class="note">軸1頭を選びます。下の一覧をタップで変更できます。</div>`:`
+    ${isTanpuku()?`<div class="note">軸1頭を選びます。下の一覧をタップで変更できます。</div>`
+     :isUmaren()?`<div class="note">丸の1番目が軸、2番目以降が相手です。点数＝相手の数。
+       相手を増やすほど点数が増えます。</div>`:`
     <div class="lb">BOX</div>
     <div class="seg">${["B5","B6","B7"].map(k=>
       `<button class="${S.kata===k?"on":""}" onclick="setKata('${k}')">${k}</button>`).join("")}</div>
@@ -794,7 +812,7 @@ function drawRace(keep){
   </div></div>`);
   if(cb.out.length&&!isTanpuku()){
     h.push(`<details><summary>買い目 ${cb.out.length}点を見る<span class="c">オッズの安い順</span></summary>
-      <div style="padding:0 16px 14px"><table class="ktbl">${cb.out.map(c=>({c,o:oddsOf(...c)}))
+      <div style="padding:0 16px 14px"><table class="ktbl">${cb.out.map(c=>({c,o:comboOdds(c)}))
         .sort((a,b)=>(a.o??1e9)-(b.o??1e9)).map(x=>
         `<tr><td>${x.c.join(" - ")}</td><td>${x.o==null?'<span class="unk">不明</span>':x.o+"倍"}</td></tr>`
         ).join("")}</table></div></details>`);
