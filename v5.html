@@ -43,6 +43,9 @@ header{position:sticky;top:0;z-index:30;background:var(--hdr);
 .tgl{flex:0 0 auto;width:32px;height:32px;border-radius:99px;border:0;background:var(--fill);
   color:var(--fg);font-size:15px;cursor:pointer}
 h1.big{font-size:32px;font-weight:800;letter-spacing:-.04em;margin:18px 2px 2px;line-height:1.12}
+.dayhead{display:flex;align-items:baseline;gap:9px;margin:18px 2px 14px;flex-wrap:wrap}
+.dayhead .d1{font-size:21px;font-weight:800;letter-spacing:-.03em}
+.dayhead .d2{font-size:13.5px;color:var(--sub);font-weight:600}
 .date{font-size:14px;color:var(--sub);margin:0 2px 16px;font-weight:500}
 .card{background:var(--card);border-radius:16px;margin:0 0 16px;box-shadow:var(--shadow);overflow:hidden}
 .card .inner{padding:15px 16px}
@@ -130,8 +133,8 @@ details[open] summary::after{content:"⌃";transform:translateY(3px)}
 .mrow{display:flex;align-items:center;gap:9px;padding:10px 16px;position:relative;cursor:pointer}
 .mrow+.mrow::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
 .mrow .mt{flex:0 0 42px;font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums}
-.mrow .mg{flex:1 1 auto;min-width:0;font-size:13.5px;font-weight:600;overflow:hidden;
-  text-overflow:ellipsis;white-space:nowrap}
+.mrow .mg{flex:1 1 auto;min-width:0;font-size:13.5px;font-weight:600;line-height:1.4}
+.mrow .sub2{display:block;font-size:11.5px;color:var(--sub);font-weight:500;margin-top:2px}
 .mrow .mv{flex:0 0 auto;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
 .mv.down{color:var(--green)} .mv.up{color:var(--red)}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-end;z-index:60;
@@ -258,6 +261,11 @@ function tenkaiLine(){
   done.forEach(c=>{const k=c.ba+c.surf;by[k]=by[k]||{f:0,n:0};by[k].f+=c.front;by[k].n+=c.fin;});
   return Object.keys(by).map(k=>`${k} 前残り <b>${Math.round(by[k].f/by[k].n*100)}%</b>（${by[k].n}鞍）`).join("　/　");
 }
+/* 場R＋騎手の小さな添え字（馬名の後ろに出す） */
+function who(x,extra){
+  const bits=[x.place, x.jk, extra].filter(Boolean).map(esc);
+  return bits.length?`<span class="sub2">${bits.join("・")}</span>`:"";
+}
 function mrow(place,time,inner,val,cls){
   const rid=ridOf(place);
   return `<div class="mrow" ${rid?`onclick="openRace('${rid}')"`:""}>
@@ -272,7 +280,8 @@ function drawHome(){
   const races=up.length?up:all;
   const od=TODAY.odds||{}, al=TODAY.alerts||[], ck=(TODAY.chokyo&&TODAY.chokyo.a)||[], ag=TODAY.agari||[];
   const h=[];
-  h.push(`<h1 class="big">今日</h1><div class="date">${esc(TODAY.date)}・${esc((TODAY.venues||[]).join("／"))}・${esc(TODAY.races||"")}鞍</div>`);
+  h.push(`<div class="dayhead"><span class="d1">${esc(TODAY.date)}</span>
+    <span class="d2">${esc((TODAY.venues||[]).join("／"))}・${esc(TODAY.races||"")}鞍</span></div>`);
   h.push(`<div class="card"><div class="inner"><div class="sum">${tenkaiLine()}</div>
     <div class="stats">
       <div class="stat"><div class="v">${al.length}</div><div class="k">大穴アラート</div></div>
@@ -306,23 +315,23 @@ function drawHome(){
   h.push(`<div class="sec">材料</div>`);
   h.push(`<details><summary>オッズの動き<span class="c">支持増${(od.down||[]).length}・支持減${(od.up||[]).length}</span></summary>
     ${(od.down||[]).slice(0,8).map(x=>mrow(x.place,x.time,
-      `${badge(x.num,x.heads,true)} ${esc(x.place)}`,`${x.o0}→${x.o1}（${x.pct}%）`,"down")).join("")}
+      `${badge(x.num,x.heads,true)} ${esc(x.name||"")} ${who(x)}`,`${x.o0}→${x.o1}（${x.pct}%）`,"down")).join("")}
     ${(od.up||[]).slice(0,5).map(x=>mrow(x.place,x.time,
-      `${badge(x.num,x.heads,true)} ${esc(x.place)}`,`${x.o0}→${x.o1}（+${Math.abs(x.pct)}%）`,"up")).join("")}
+      `${badge(x.num,x.heads,true)} ${esc(x.name||"")} ${who(x)}`,`${x.o0}→${x.o1}（+${Math.abs(x.pct)}%）`,"up")).join("")}
     <div class="mini">オッズが下がった＝支持が増えた。最終4-9番人気で支持が強く増えた馬は複勝1.4-1.6倍（144鞍の実測）。</div>
   </details>`);
   h.push(`<details><summary>大穴アラート<span class="c">${al.length}頭</span></summary>
     ${al.slice(0,14).map(x=>mrow(x.place,x.time,
-      `${badge(x.num,x.heads,true)} ${esc(x.name)} <span style="color:var(--sub);font-weight:500">${esc(x.place)}・${esc(x.pop)}人</span>`,
+      `${badge(x.num,x.heads,true)} ${esc(x.name)} ${who(x, x.pop?x.pop+"番人気":"")}`,
       `HS${x.rank}位`)).join("")}
     <div class="mini">HS7位以内 × 8番人気以下。買え指示ではなく、相手を考える材料。</div></details>`);
   h.push(`<details><summary>調教A<span class="c">${ck.length}頭</span></summary>
     ${ck.map(x=>mrow(x.place,x.time,
-      `${badge(x.num,x.heads,true)} ${esc(x.name)} <span style="color:var(--sub);font-weight:500">${esc(x.place)}</span>`,
+      `${badge(x.num,x.heads,true)} ${esc(x.name)} ${who(x)}`,
       esc(x.tanpyo||""))).join("")||`<div class="mini">該当なし</div>`}</details>`);
   h.push(`<details><summary>上がり上位<span class="c">${ag.length}頭</span></summary>
     ${ag.slice(0,14).map(x=>mrow(x.place,x.time,
-      `${badge(x.num,x.heads,true)} ${esc(x.name)} <span style="color:var(--sub);font-weight:500">${esc(x.place)}・${esc(x.style)}</span>`,
+      `${badge(x.num,x.heads,true)} ${esc(x.name)} ${who(x, x.style||"")}`,
       esc(x.val))).join("")}
     <div class="mini">直近5走の最速上がり3F。出所は馬カードに出る。</div></details>`);
   const cs=(TODAY.tenkai&&TODAY.tenkai.courses)||[];
@@ -331,12 +340,20 @@ function drawHome(){
       <span class="mg">${esc(c.label)}</span>
       <span class="mv">平常${Math.round(c.base*100)}%${c.fin?` → 今日${Math.round(c.today*100)}%（${c.fin}鞍）`:""}</span></div>`).join("")}
     <div class="mini">前残り率＝3着以内に逃げ・先行が2頭以上入った割合。平常値は当日を除く全期間。</div></details>`);
-  h.push(`<details><summary>全レース</summary>
-    ${(IDX&&IDX.races||[]).map(r=>`<div class="row" onclick="openRace('${esc(r.race_id)}')">
+  /* 全レース＝軸・騎手・人気・単勝オッズ・床（allracesが無い旧データは鞍一覧で代替） */
+  const arace=(TODAY.allraces&&TODAY.allraces.length)?TODAY.allraces:null;
+  h.push(`<details><summary>全レース<span class="c">${(arace||(IDX&&IDX.races)||[]).length}鞍</span></summary>
+    ${(arace||(IDX&&IDX.races)||[]).map(r=>`<div class="row" onclick="openRaceByPlace('${esc(r.place)}')">
       <span class="time">${esc(r.time)}</span>
       <div class="g"><div class="g1">${esc(r.place)} ${esc(r.name)}</div>
-        <div class="g2">${esc(r.course)}・${esc(r.heads)}頭</div></div>
-      ${cdHtml(r.time)}<span class="chev">›</span></div>`).join("")}</details>`);
+        <div class="g2">${r.hs1num
+          ? `軸 ${badge(r.hs1num,r.heads,true)} ${esc(r.hs1name)}${r.jk?`・${esc(r.jk)}`:""}`
+          : `${esc(r.course)}・${esc(r.heads)}頭`}</div></div>
+      ${r.pop||r.odds!=null
+        ? `<span class="pv"><b>${r.pop?esc(r.pop)+"人":""} ${r.odds!=null?esc(r.odds):""}</b>
+             <i>床 ${r.floor!=null?esc(r.floor)+"倍":"—"}</i></span>`
+        : cdHtml(r.time)}
+      <span class="chev">›</span></div>`).join("")}</details>`);
   $("homebody").innerHTML=h.join("");
   $("homeload").classList.add("hide");
 }
