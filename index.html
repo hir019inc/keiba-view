@@ -207,6 +207,55 @@ details[open] summary::after{content:"⌃";transform:translateY(3px)}
   margin:-2.5px 0 0 -2.5px;border-radius:50%;background:var(--sub);opacity:.5}
 .gauge i.on.base::after{background:#fff;opacity:.9}
 .tklab{flex:0 0 40px;text-align:right;font-size:12.5px;font-weight:800;letter-spacing:-.02em}
+/* ---- 買い目（V4のP2から移植・2026-09-13） ---- */
+.seg.w{flex-wrap:wrap}
+.seg.w button{flex:1 1 30%}
+.khint{display:flex;align-items:flex-start;gap:8px;margin:0 0 12px;padding:9px 10px;
+  background:var(--accent-l);border-radius:10px}
+.khint .kk{flex:0 0 auto;font-size:11.5px;font-weight:800;color:#fff;background:var(--accent);
+  border-radius:6px;padding:3px 8px;white-space:nowrap}
+.khint .kw{font-size:11.5px;color:var(--fg2);line-height:1.5}
+.tkrow{display:flex;align-items:center;gap:9px;margin-top:13px;padding-top:13px;
+  border-top:.5px solid var(--sep)}
+.tklb{font-size:13.5px;font-weight:700}
+.tkn{font-size:11.5px;color:var(--sub);margin-left:auto}
+.tkbtn{flex:0 0 auto;padding:6px 15px;border:.5px solid var(--sep);border-radius:9px;
+  background:var(--card2);color:var(--fg);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
+.tkbtn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tkbtn:disabled{opacity:.4}
+.lbno{font-size:10.5px;color:var(--sub);font-weight:500;margin-left:6px}
+.note{font-size:11.5px;color:var(--sub);line-height:1.6;margin:10px 0 0}
+.sr{display:flex;align-items:center;gap:9px;padding:9px 16px;position:relative;cursor:pointer}
+.sr+.sr::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
+.sr.dim{opacity:.42}
+.selno{width:23px;height:23px;border-radius:99px;flex:0 0 auto;display:inline-flex;align-items:center;
+  justify-content:center;font-size:11.5px;font-weight:800;background:var(--fill);color:var(--sub)}
+.selno.on{background:var(--accent);color:#fff}
+.selno.ax{background:var(--gold);color:#fff}
+.selno.out{opacity:.45}
+.nm{flex:1 1 auto;min-width:0;font-weight:700;font-size:14px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.mt2{flex:0 0 auto;font-size:11px;color:var(--sub);white-space:nowrap;font-variant-numeric:tabular-nums}
+.up{color:var(--green);font-weight:800}
+.dn{color:var(--red);font-weight:800}
+.tkm{margin-left:5px;color:var(--accent2);font-size:10.5px;font-weight:700}
+.sum2{display:flex;gap:11px;margin-top:14px;padding-top:14px;border-top:.5px solid var(--sep);flex-wrap:wrap}
+.sum2>div{flex:1 1 0;min-width:60px}
+.sum2 .k{font-size:10.5px;color:var(--sub);white-space:nowrap}
+.sum2 .v{font-size:16.5px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.03em;margin-top:1px}
+.sum2 .v.warn{color:var(--red)}
+.keep{width:100%;margin-top:13px;padding:13px;border-radius:12px;border:0;font:inherit;
+  font-size:15.5px;font-weight:800;cursor:pointer;background:var(--accent);color:#fff}
+.keep:active{opacity:.75}
+.ktbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.ktbl td{padding:7px 4px;border-bottom:.5px solid var(--sep);font-variant-numeric:tabular-nums}
+.ktbl td:last-child{text-align:right;white-space:nowrap}
+.unk{color:var(--sub)}
+.del{border:0;background:none;color:var(--sub);cursor:pointer;padding:3px 5px;font:inherit;font-size:11.5px}
+.copyall{width:100%;margin-top:11px;padding:10px;border-radius:10px;background:var(--fill);
+  color:var(--fg);border:0;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
+.numin{width:78px;border:.5px solid var(--sep);border-radius:9px;padding:8px;font:inherit;
+  font-size:14px;background:var(--card2);color:var(--fg);text-align:right;font-variant-numeric:tabular-nums}
 /* 端末に届いている版を判別できるように（Pagesは10分のキャッシュが付くため） */
 .verline{font-size:11px;color:var(--sub);text-align:center;padding:22px 0 6px;letter-spacing:.02em}
 </style></head><body>
@@ -232,7 +281,8 @@ details[open] summary::after{content:"⌃";transform:translateY(3px)}
 /* ★version_check.py が読む形（"5.0.0"＝Vを付けない）。表示は下で "V" を足す */
 const VER="5.0.0";
 const APPVER="V"+VER;
-const LS={repo:"kv_repo",token:"kv_token",picks:"derby_picks",theme:"derby_theme"};
+const LS={repo:"kv_repo",token:"kv_token",picks:"derby_picks",theme:"derby_theme",
+          kaime:"derby_kaime",tanka:"derby_tanka"};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 
@@ -243,7 +293,13 @@ function toggleTheme(){applyTheme(document.documentElement.getAttribute("data-th
   if(!t)t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";applyTheme(t);})();
 
 async function fetchDoc(path){
-  try{const r=await fetch("../"+path,{cache:"no-store"});if(r.ok)return await r.text();}catch(e){}
+  /* 1) 同じサイトに置かれたデータ（公開配信＝index.htmlと同階層）
+     2) ローカル開発（07_viewer/ から見た ../）
+     3) どちらも無ければ private リポジトリを各自のトークンで読む
+     ★公開側にデータを置くと1で当たるので、トークンの分岐には入らない。 */
+  for(const pre of ["","../"]){
+    try{const r=await fetch(pre+path,{cache:"no-store"});if(r.ok)return await r.text();}catch(e){}
+  }
   const repo=localStorage.getItem(LS.repo),token=localStorage.getItem(LS.token);
   if(!repo||!token)throw new Error("NOSETUP");
   const r=await fetch(`https://api.github.com/repos/${repo}/contents/${encodeURI(path)}`,
@@ -429,13 +485,159 @@ function openRaceByPlace(place){
   openRace(rid);
 }
 
+/* ---------- 買い目（V4のP2から移植・2026-09-13） ----------
+   V5の「買い方」は説明文が出るだけのモックだったので、P2の実装をそのまま持ってきた。
+   三連複オッズは 00_published/p2/sf_<raceId>.json（P1が取得した実値）を読む。 */
+const TENKAI=[["none","読みなし"],["mae","前残り"],["sashi","差し・追込"],
+              ["agari","上がり勝負"],["tanki","単騎逃げ"],["ran","乱ペース"]];
+const RULE={none:{},mae:{"逃":3,"先":2,"差":-.5,"追":-2},sashi:{"逃":-2,"先":-1.5,"差":2,"追":2.5},
+            agari:{},tanki:{"逃":4,"先":1},ran:{"逃":-2.5,"先":-1.5,"差":2,"追":2.5}};
+const KATA={B5:{n:5,ax:0,l:"B5"},B6:{n:6,ax:0,l:"B6"},B7:{n:7,ax:0,l:"B7"},
+            F5:{n:6,ax:1,l:"F5"},F6:{n:7,ax:1,l:"F6"},F7:{n:8,ax:1,l:"F7"},
+            J2:{n:2,ax:2,l:"2頭軸×ヒモ全"}};
+const KEN=[["sanrenpuku","3連複"],["tan","単勝"],["fuku","複勝"]];
+let SF=null;
+let S={tenkai:"none",tekisei:false,ken:"sanrenpuku",kata:"F6",tanka:100,sel:[],log:[]};
+try{S.log=JSON.parse(localStorage.getItem(LS.kaime)||"[]")}catch(e){}
+try{const t=+localStorage.getItem(LS.tanka);if(t>=100)S.tanka=t}catch(e){}
+const saveKaime=()=>{try{localStorage.setItem(LS.kaime,JSON.stringify(S.log));
+  localStorage.setItem(LS.tanka,String(S.tanka))}catch(e){}};
+const isTanpuku=()=>S.ken==="tan"||S.ken==="fuku";
+const oddsOf=(a,b,c)=>{ if(!SF)return null;
+  const k=[a,b,c].map(Number).sort((x,y)=>x-y).join("-"); const v=SF.odds[k];
+  return (v===undefined)?null:v; };
+
+/* 穴×適性重視のシグナル。HS順位では相手網の外(8-10位)だが、脚質/騎手/距離帯複勝/前走で
+   条件を満たす馬を拾う。★人気馬は外す(4番人気以下)＝穴を拾うのが狙いで堅い相手を増やす操作ではない。
+   根拠＝全4841Rの飛び込みパターン（前脚質1.5/騎手A2.2/HS8-10位1.44倍）。 */
+function tekiseiSig(h){
+  const s=[];
+  if(["逃","先"].includes(String(h.kyaku||"").slice(0,1))) s.push("前");
+  const jk=String(h.jk||""); if(jk.includes("(A)")||jk.includes("(B)")) s.push("騎");
+  const kf=parseFloat(String(h.kofuku||"").replace("%","")); if(kf>=45) s.push("距複");
+  const z=String(h.zenso||""); if(["1","2","3"].includes(z.slice(0,1))) s.push("前走");
+  return s;
+}
+function tekiseiHit(h){ return h.hsr>=8 && h.hsr<=10 && (h.pop==null||h.pop>=4) && tekiseiSig(h).length>0; }
+function tekiseiCount(){ return (PACK?PACK.horses||[]:[]).filter(tekiseiHit).length; }
+
+function auto(){
+  const H=(PACK&&PACK.horses)||[];
+  const ag=[...H].filter(h=>h.agari!=null).sort((a,b)=>a.agari-b.agari);
+  const gr={}; ag.forEach((h,i)=>gr[h.num]=i+1);
+  return [...H].map(h=>{let sc=-h.hsr;
+      sc+=(RULE[S.tenkai][h.kyaku]||0);
+      if(S.tenkai==="agari"&&gr[h.num]) sc+=((PACK.heads||H.length)-gr[h.num])*.35;
+      if(S.tenkai==="ran"&&h.odds>=30) sc+=1.2;
+      if(S.tekisei&&tekiseiHit(h)) sc+=3.2+0.4*tekiseiSig(h).length;
+      return {...h,sc,moved:Math.abs(sc+h.hsr)>.01?(sc+h.hsr>0?1:-1):0};
+    }).sort((a,b)=>b.sc-a.sc);
+}
+/* 券種の推奨。8,534鞍の実測で F6 と 軸の単勝 を同額(1,500円)で比べた相対比較。
+   ★どの条件も1鞍あたりの損益は負＝「勝てる券種」ではなく「同じ鞍でどちらがマシか」。 */
+function kenshuHint(){
+  if(!PACK||!PACK.horses||!PACK.horses.length) return null;
+  const hs=[...PACK.horses].sort((a,b)=>a.hsr-b.hsr);
+  const ax=hs[0]; if(!ax) return null;
+  const gap=(hs.length>1&&ax.hs!=null&&hs[1].hs!=null)?(ax.hs-hs[1].hs):null;
+  const pop=ax.pop, heads=PACK.heads||hs.length;
+  const mid=SF?midOdds():null;
+  if(pop==null||gap==null) return null;
+  if(pop<=3&&gap>=6)
+    return {k:"単勝",why:`軸${pop}番人気・gap${gap.toFixed(1)}＝軸が来ると読める帯。実測では同額なら単勝が有利（F6は取り分が薄まる）`};
+  if(pop>=4&&pop<=6&&(gap>=4||(mid!=null&&mid>30&&heads>=10)))
+    return {k:"F6",why:`妙味帯(軸${pop}番人気)で`+(gap>=4?`gap${gap.toFixed(1)}`:`配当中央${Math.round(mid)}倍・${heads}頭`)
+      +`＝軸の単勝的中率が1割を切る帯。相手へ散らす方が拾える`};
+  if(pop>=4&&pop<=6)
+    return {k:"単勝",why:"妙味帯だがgapが小さく配当も薄い。実測では単勝がわずかに有利"};
+  return null;
+}
+function midOdds(){
+  const {out}=combos(); if(!out||!out.length) return null;
+  const os=out.map(c=>oddsOf(...c)).filter(v=>v!=null).sort((a,b)=>a-b);
+  return os.length?os[Math.floor(os.length/2)]:null;
+}
+const need=()=>{ if(isTanpuku())return 1; const K=KATA[S.kata]; return K.ax===2?2:K.n; };
+function resetSel(){ S.sel=auto().slice(0,need()).map(h=>h.num); if(PACK)drawRace(); }
+function topupSel(){ for(const h of auto()){ if(S.sel.length>=need())break;
+  if(!S.sel.includes(h.num)) S.sel.push(h.num); } }
+function combos(){
+  const K=KATA[S.kata], use=S.sel.slice(0,need()), out=[];
+  if(S.sel.length<need()) return {out:[],K,short:need()-S.sel.length};
+  if(isTanpuku()) return {out:[[use[0]]],K,short:0};
+  if(K.ax===0){ for(let i=0;i<use.length;i++)for(let j=i+1;j<use.length;j++)for(let k=j+1;k<use.length;k++)
+                  out.push([use[i],use[j],use[k]]); }
+  else if(K.ax===1){ const a=use[0],r=use.slice(1);
+    for(let i=0;i<r.length;i++)for(let j=i+1;j<r.length;j++) out.push([a,r[i],r[j]]); }
+  else { const [a,b]=use; (PACK.horses||[]).forEach(h=>{if(h.num!==a&&h.num!==b) out.push([a,b,h.num]);}); }
+  return {out,K,short:0};
+}
+function setT(k){ S.tenkai=k; S.sel=auto().slice(0,need()).map(h=>h.num); drawRace(); }
+function setKen(k){ S.ken=k; S.sel=auto().slice(0,need()).map(h=>h.num); drawRace(); }
+/* ★穴×適性重視ONではF型(軸1頭固定)を使わせない。適性重視は「軸が飛ぶ前提で網を広く張る」
+   考え方で、軸1頭に依存するF型と設計が矛盾する（2026-09-05の該当26鞍＝F6 ON 49.9% / B7 ON 101.3%）。 */
+function setTeki(){
+  S.tekisei=!S.tekisei;
+  if(S.tekisei&&["F5","F6","F7"].includes(S.kata)) S.kata="B7";
+  S.sel=auto().slice(0,need()).map(h=>h.num); drawRace();
+}
+function setKata(k){
+  if(S.tekisei&&["F5","F6","F7"].includes(k)) return;
+  S.kata=k; topupSel(); drawRace();
+}
+function tapSel(n){ const i=S.sel.indexOf(n); if(i>=0)S.sel.splice(i,1); else S.sel.push(n); drawRace(); }
+function keepKaime(){
+  const {out,K}=combos(); if(!out.length)return;
+  const n=out.length, unit=Math.max(100,S.tanka||100);
+  const kl=KEN.find(k=>k[0]===S.ken)[1];
+  const body=isTanpuku()?`${S.sel[0]}番 ${unit.toLocaleString()}円`
+                        :`${K.l} ${S.sel.slice(0,need()).join("-")} ${n}点×${unit}円`;
+  S.log.push(`${PACK.venue}${PACK.r}R ${kl} ${body} `
+    +`展開=${TENKAI.find(t=>t[0]===S.tenkai)[1]}${S.tekisei?";穴x適性重視=ON":""}`);
+  saveKaime(); drawRace();
+}
+function dropKaime(i){ S.log.splice(i,1); saveKaime(); drawRace(); }
+function copyKaime(){
+  const t=`${PACK.date} 買った記録\n`+S.log.map(x=>"- "+x).join("\n");
+  navigator.clipboard?.writeText(t).then(()=>alert("コピーしました\n\n"+t),()=>alert(t));
+}
+function kaimeSummary(cb){
+  const {out,short}=cb;
+  if(short) return `<div class="sum2"><div><div class="k">あと${short}頭</div>
+    <div class="v warn">選んでください</div></div></div>`;
+  const unit=Math.max(100,S.tanka||100);
+  if(isTanpuku()){
+    const hh=(PACK.horses||[]).find(x=>+x.num===+S.sel[0]);
+    const kl=KEN.find(k=>k[0]===S.ken)[1];
+    return `<div class="sum2">
+      <div><div class="k">券種</div><div class="v">${esc(kl)}</div></div>
+      <div><div class="k">馬</div><div class="v">${esc(String(S.sel[0]||"-"))}番</div></div>
+      <div><div class="k">投資</div><div class="v">${unit.toLocaleString()}</div></div>
+      ${hh&&hh.odds?`<div><div class="k">単勝</div><div class="v">${esc(String(hh.odds))}</div></div>`:""}
+      </div><button class="keep" onclick="keepKaime()">買った</button>`;
+  }
+  const n=out.length;
+  const os=out.map(c=>oddsOf(...c)).filter(v=>v!=null).sort((a,b)=>a-b);
+  const unknown=n-os.length, mid=os.length?os[Math.floor(os.length/2)]:null;
+  const safe=os.filter(o=>o>=n).length;
+  return `<div class="sum2">
+    <div><div class="k">点数</div><div class="v">${n}</div></div>
+    <div><div class="k">投資</div><div class="v">${(unit*n).toLocaleString()}</div></div>
+    <div><div class="k">配当・中央</div><div class="v">${mid==null?"—":mid.toFixed(0)}</div></div>
+    <div><div class="k">トリガミ回避</div><div class="v ${os.length&&safe/os.length<.5?"warn":""}">${safe}/${os.length}</div></div>
+    ${unknown?`<div><div class="k">配当不明</div><div class="v warn">${unknown}</div></div>`:""}
+    </div><button class="keep" onclick="keepKaime()">買った</button>`;
+}
+
 /* ---------- 鞍ビュー ---------- */
 async function openRace(rid){
   $("racebody").innerHTML=`<div class="load">読み込み中…</div>`;
   go("race");
   try{ PACK=JSON.parse(await fetchDoc(`00_published/p2/${rid}.json`)); }
   catch(e){ $("racebody").innerHTML=`<div class="err"><b>読み込めません</b><br>${esc(e.message)}</div>`; return; }
+  try{ SF=JSON.parse(await fetchDoc(`00_published/p2/sf_${rid}.json`)); }catch(e){ SF=null; }
   fillPickJk();
+  S.sel=auto().slice(0,need()).map(h=>h.num);   /* 鞍が変わったら選択を組み直す */
   drawRace();
 }
 function pickOf(){ return PACK?PICKS.find(p=>p.race_id===PACK.race_id):null; }
@@ -490,15 +692,69 @@ function drawRace(){
       <span class="hsb">HS${esc(hh.hsr)}</span>
     </div>`).join(""));
   h.push(`</div>`);
-  h.push(`<div class="sec">買い方</div><div class="card"><div class="inner">
-    <div class="lb">絞り込みの深さ</div>
-    <div class="seg" id="depth">
-      <button class="on" onclick="setK('one',this)">一点勝負</button>
-      <button onclick="setK('two',this)">2頭絞り込み</button>
-      <button onclick="setK('wide',this)">買い目広め</button>
-    </div>
-    <div class="res" id="kres"></div>
+  /* ---- 買い目（V4のP2から移植）---- */
+  const ord=auto(), cb=combos(), useN=need();
+  h.push(`<div class="sec">展開の読み</div><div class="card"><div class="inner">
+    <div class="seg w">${TENKAI.map(([k,l])=>
+      `<button class="${S.tenkai===k?"on":""}" onclick="setT('${k}')">${esc(l)}</button>`).join("")}</div>
+    <div class="tkrow"><span class="tklb">穴×適性重視</span>
+      <span class="tkn">${tekiseiCount()?`該当${tekiseiCount()}頭`:"該当なし"}</span>
+      <button class="tkbtn ${S.tekisei?"on":""}" onclick="setTeki()"
+        ${tekiseiCount()?"":"disabled"}>${S.tekisei?"ON":"OFF"}</button></div>
+    <div class="note">HS8-10位 × 4番人気以下 × 適性（前寄り脚質／騎手A・B／距離帯複45%以上／前走3着内）の馬を
+      相手へ引き上げます。点数は変わらず中身が入れ替わります。</div>
   </div></div>`);
+  h.push(`<div class="sec">買い方</div><div class="card"><div class="inner">
+    ${(()=>{const k=kenshuHint(); return k?`<div class="khint">
+      <span class="kk">${esc(k.k)}向き</span><span class="kw">${esc(k.why)}</span></div>`:"";})()}
+    <div class="lb" style="margin-top:0">券種</div>
+    <div class="seg">${KEN.map(([k,l])=>
+      `<button class="${S.ken===k?"on":""}" onclick="setKen('${k}')">${esc(l)}</button>`).join("")}</div>
+    ${isTanpuku()?`<div class="note">軸1頭を選びます。下の一覧をタップで変更できます。</div>`:`
+    <div class="lb">BOX</div>
+    <div class="seg">${["B5","B6","B7"].map(k=>
+      `<button class="${S.kata===k?"on":""}" onclick="setKata('${k}')">${k}</button>`).join("")}</div>
+    <div class="lb">フォーメーション${
+      S.tekisei?'<span class="lbno">穴×適性重視ONではF型を使いません</span>':""}</div>
+    <div class="seg">${["F5","F6","F7","J2"].map(k=>{
+      const no=S.tekisei&&["F5","F6","F7"].includes(k);
+      return `<button class="${S.kata===k?"on":""}" onclick="setKata('${k}')"
+        ${no?"disabled":""}>${esc(KATA[k].l)}</button>`;}).join("")}</div>`}
+    <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+      <span class="lb" style="margin:0">1点あたり</span>
+      <input class="numin" type="number" step="100" min="100" value="${S.tanka}"
+        onchange="S.tanka=Math.max(100,+this.value||100);saveKaime();drawRace()">
+      <span class="lb" style="margin:0">円</span></div>
+    ${kaimeSummary(cb)}
+  </div></div>`);
+  h.push(`<div class="sec">買い目に使う馬 <span class="cnt">${
+    cb.K.ax===1?"1番目が軸":cb.K.ax===2?"1・2番目が軸":"選んだ順が優先度"}・${useN}頭</span></div>
+  <div class="card">${ord.map(hh=>{
+    const i=S.sel.indexOf(hh.num), on=i>=0, used=on&&i<useN;
+    const cls=!on?"":(cb.K.ax&&i<cb.K.ax?"ax":used?"on":"out");
+    const mv=hh.moved>0?'<span class="up">▲</span>':hh.moved<0?'<span class="dn">▼</span>':"";
+    return `<div class="sr ${on?"":"dim"}" onclick="tapSel(${hh.num})">
+      <span class="selno ${cls}">${on?i+1:""}</span>${badge(hh.num,PACK.heads,true)}
+      <span class="nm">${esc(hh.name)}</span>
+      <span class="mt2">${esc(hh.pop??"-")}人 ${esc(hh.odds??"-")} ${esc(hh.kyaku)} HS${esc(hh.hsr)}${mv}${
+        tekiseiHit(hh)?`<b class="tkm">適${esc(tekiseiSig(hh).join(""))}</b>`:""}</span>
+    </div>`;}).join("")}
+    <div class="mini">タップで選択・解除。並びはHSに展開の補正を足したもの（▲▼＝HS順から動いた馬）。
+      <button class="copyall" onclick="resetSel()">デフォルトに戻す</button></div></div>`);
+  if(cb.out.length&&!isTanpuku()){
+    h.push(`<details><summary>買い目 ${cb.out.length}点を見る<span class="c">オッズの安い順</span></summary>
+      <div style="padding:0 16px 14px"><table class="ktbl">${cb.out.map(c=>({c,o:oddsOf(...c)}))
+        .sort((a,b)=>(a.o??1e9)-(b.o??1e9)).map(x=>
+        `<tr><td>${x.c.join(" - ")}</td><td>${x.o==null?'<span class="unk">不明</span>':x.o+"倍"}</td></tr>`
+        ).join("")}</table></div></details>`);
+  }
+  if(S.log.length){
+    h.push(`<div class="sec">買った記録 <span class="cnt">${S.log.length}件・この端末に保存</span></div>
+    <div class="card"><div class="inner"><table class="ktbl">${S.log.map((r,i)=>
+      `<tr><td>${esc(r)}</td><td><button class="del" onclick="dropKaime(${i})">消す</button></td></tr>`).join("")}</table>
+      <button class="copyall" onclick="copyKaime()">まとめてコピー</button>
+      <div class="note">鞍をまたいで貯まります。振り返りへの取り込みはMac側で行います。</div></div></div>`);
+  }
   h.push(`<div class="sec">この鞍のメモ</div><div class="card"><div class="inner">
     <textarea class="memo" id="rmemo" rows="2" placeholder="なぜ気になるか">${esc(p?p.memo:"")}</textarea>
     <div class="btns">
@@ -507,7 +763,6 @@ function drawRace(){
       <button onclick="setState('見送り')">見送り</button>
     </div></div></div>`);
   $("racebody").innerHTML=h.join("");
-  setK("one",document.querySelector("#depth button"));
 }
 function togglePick(){
   const p=pickOf();
@@ -520,17 +775,6 @@ function setState(s){
   const p=ensurePick(s);
   p.state=s; p.memo=($("rmemo")&&$("rmemo").value||"").trim(); p.heads=PACK.heads;
   savePicks(); drawRace(); drawHome();
-}
-function setK(k,btn){
-  document.querySelectorAll("#depth button").forEach(b=>b.classList.remove("on"));
-  if(btn)btn.classList.add("on");
-  const p=pickOf(), marks=(p&&p.marks)||[];
-  const names=marks.length?marks.map(m=>`${m.num}番 ${m.name}`).join(" ／ "):"★で注目した馬がここに並びます";
-  const txt={one:["一点勝負","狙いを1点に置く形。3連複1点か単勝。"],
-             two:["2頭絞り込み","馬連、または3連複2頭軸。"],
-             wide:["買い目広め","3連複のF型・BOX。消去法で構える時。"]}[k];
-  $("kres").innerHTML=`<div class="cap">${txt[0]}</div><div class="big">${esc(names)}</div>
-    <div class="sm">${txt[1]}</div>`;
 }
 function openM(num){
   const h=(PACK.horses||[]).find(x=>+x.num===+num); if(!h)return;
