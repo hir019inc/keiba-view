@@ -233,6 +233,11 @@ details[open] summary::after{content:"⌃";transform:translateY(3px)}
 .selno.on{background:var(--accent);color:#fff}
 .selno.ax{background:var(--gold);color:#fff}
 .selno.out{opacity:.45}
+/* 丸は23pxしかないので、指で押せるよう周囲を含めて44px相当のヒット領域を作る。
+   padding で広げ、同じ量の負マージンで見た目の位置は動かさない。 */
+.selhit{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
+  padding:11px 9px;margin:-11px -5px -11px -9px;cursor:pointer}
+.selhit:active .selno{transform:scale(.88)}
 .nm{flex:1 1 auto;min-width:0;font-weight:700;font-size:14px;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}
 .mt2{flex:0 0 auto;font-size:11px;color:var(--sub);white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -497,7 +502,7 @@ const KATA={B5:{n:5,ax:0,l:"B5"},B6:{n:6,ax:0,l:"B6"},B7:{n:7,ax:0,l:"B7"},
             J2:{n:2,ax:2,l:"2頭軸×ヒモ全"}};
 const KEN=[["sanrenpuku","3連複"],["tan","単勝"],["fuku","複勝"]];
 let SF=null;
-let S={tenkai:"none",tekisei:false,ken:"sanrenpuku",kata:"F6",tanka:100,sel:[],log:[]};
+let S={tenkai:"none",tekisei:false,ken:"sanrenpuku",kata:"F6",tanka:100,sel:[],log:[],tenkaiOpen:false};
 try{S.log=JSON.parse(localStorage.getItem(LS.kaime)||"[]")}catch(e){}
 try{const t=+localStorage.getItem(LS.tanka);if(t>=100)S.tanka=t}catch(e){}
 const saveKaime=()=>{try{localStorage.setItem(LS.kaime,JSON.stringify(S.log));
@@ -558,7 +563,7 @@ function midOdds(){
   return os.length?os[Math.floor(os.length/2)]:null;
 }
 const need=()=>{ if(isTanpuku())return 1; const K=KATA[S.kata]; return K.ax===2?2:K.n; };
-function resetSel(){ S.sel=auto().slice(0,need()).map(h=>h.num); if(PACK)drawRace(); }
+function resetSel(){ S.sel=auto().slice(0,need()).map(h=>h.num); if(PACK)drawRace(true); }
 function topupSel(){ for(const h of auto()){ if(S.sel.length>=need())break;
   if(!S.sel.includes(h.num)) S.sel.push(h.num); } }
 function combos(){
@@ -572,20 +577,20 @@ function combos(){
   else { const [a,b]=use; (PACK.horses||[]).forEach(h=>{if(h.num!==a&&h.num!==b) out.push([a,b,h.num]);}); }
   return {out,K,short:0};
 }
-function setT(k){ S.tenkai=k; S.sel=auto().slice(0,need()).map(h=>h.num); drawRace(); }
-function setKen(k){ S.ken=k; S.sel=auto().slice(0,need()).map(h=>h.num); drawRace(); }
+function setT(k){ S.tenkai=k; S.sel=auto().slice(0,need()).map(h=>h.num); drawRace(true); }
+function setKen(k){ S.ken=k; S.sel=auto().slice(0,need()).map(h=>h.num); drawRace(true); }
 /* ★穴×適性重視ONではF型(軸1頭固定)を使わせない。適性重視は「軸が飛ぶ前提で網を広く張る」
    考え方で、軸1頭に依存するF型と設計が矛盾する（2026-09-05の該当26鞍＝F6 ON 49.9% / B7 ON 101.3%）。 */
 function setTeki(){
   S.tekisei=!S.tekisei;
   if(S.tekisei&&["F5","F6","F7"].includes(S.kata)) S.kata="B7";
-  S.sel=auto().slice(0,need()).map(h=>h.num); drawRace();
+  S.sel=auto().slice(0,need()).map(h=>h.num); drawRace(true);
 }
 function setKata(k){
   if(S.tekisei&&["F5","F6","F7"].includes(k)) return;
-  S.kata=k; topupSel(); drawRace();
+  S.kata=k; topupSel(); drawRace(true);
 }
-function tapSel(n){ const i=S.sel.indexOf(n); if(i>=0)S.sel.splice(i,1); else S.sel.push(n); drawRace(); }
+function tapSel(n){ const i=S.sel.indexOf(n); if(i>=0)S.sel.splice(i,1); else S.sel.push(n); drawRace(true); }
 function keepKaime(){
   const {out,K}=combos(); if(!out.length)return;
   const n=out.length, unit=Math.max(100,S.tanka||100);
@@ -660,7 +665,10 @@ function ensurePick(state){
             time:PACK.post_time,heads:PACK.heads,state:state||"検討中",memo:"",marks:[]};PICKS.unshift(p);}
   return p;
 }
-function drawRace(){
+/* keep=true で描き直しの前後にスクロール位置を保つ。
+   券種や馬の選択を変えるたびに先頭へ戻ると、16頭のリストでは操作にならないため。 */
+function drawRace(keep){
+  const _y = keep ? window.scrollY : 0;
   const place=`${PACK.venue}${PACK.r}`, p=pickOf(), marks=(p&&p.marks)||[];
   const isMk=n=>marks.some(m=>+m.num===+n);
   $("ttl").textContent=`${place}R`;
@@ -682,28 +690,44 @@ function drawRace(){
   </div>
   <button class="pickbtn ${p?"on":""}" onclick="togglePick()">${p?"★ ピック中（外す）":"★ この鞍をピック"}</button>
   </div></div>`);
-  h.push(`<div class="sec">馬 <span class="cnt">タップで詳細・★で注目</span></div><div class="card">`);
-  h.push((PACK.horses||[]).slice().sort((a,b)=>(a.hsr||99)-(b.hsr||99)).map(hh=>`
-    <div class="hr ${isMk(hh.num)?"picked":""}" onclick="openM(${hh.num})">
+  /* 並びは展開の読みで変わるので、リストより先に計算する */
+  const ord=auto(), cb=combos(), useN=need();
+  /* 展開は最初に一度選ぶだけなので畳んでおく。選択中の値は見出しに出す（開かなくても分かるように） */
+  h.push(`<details ${S.tenkaiOpen?"open":""} ontoggle="S.tenkaiOpen=this.open">
+    <summary>展開の読み<span class="c">${esc((TENKAI.find(t=>t[0]===S.tenkai)||[])[1]||"")}${
+      S.tekisei?"・穴×適性重視ON":""}</span></summary>
+    <div style="padding:0 16px 15px">
+      <div class="seg w">${TENKAI.map(([k,l])=>
+        `<button class="${S.tenkai===k?"on":""}" onclick="setT('${k}')">${esc(l)}</button>`).join("")}</div>
+      <div class="tkrow"><span class="tklb">穴×適性重視</span>
+        <span class="tkn">${tekiseiCount()?`該当${tekiseiCount()}頭`:"該当なし"}</span>
+        <button class="tkbtn ${S.tekisei?"on":""}" onclick="setTeki()"
+          ${tekiseiCount()?"":"disabled"}>${S.tekisei?"ON":"OFF"}</button></div>
+      <div class="note">HS8-10位 × 4番人気以下 × 適性（前寄り脚質／騎手A・B／距離帯複45%以上／前走3着内）の馬を
+        相手へ引き上げます。点数は変わらず中身が入れ替わります。</div>
+    </div></details>`);
+  /* ★出走馬＝詳細と買い目の選択を1つのリストに統合（2026-09-13）。
+     以前は同じ16頭が「馬」と「買い目に使う馬」で2回出ており、鞍ビューの51%を占めていた。
+     左の丸＝買い目に入れる／行の本体＝馬カード（詳細）。丸は常に出す（出入りする方が迷うため）。 */
+  h.push(`<div class="sec">出走馬 <span class="cnt">${esc(PACK.heads)}頭・${
+    cb.K.ax===1?"丸の1番目が軸":cb.K.ax===2?"丸の1・2番目が軸":"丸の順が優先度"}・${useN}頭を使用</span></div>
+  <div class="card">${ord.map(hh=>{
+    const i=S.sel.indexOf(hh.num), on=i>=0, used=on&&i<useN;
+    const cls=!on?"":(cb.K.ax&&i<cb.K.ax?"ax":used?"on":"out");
+    const mv=hh.moved>0?'<span class="up">▲</span>':hh.moved<0?'<span class="dn">▼</span>':"";
+    return `<div class="hr ${isMk(hh.num)?"picked":""}" onclick="openM(${hh.num})">
+      <span class="selhit" onclick="event.stopPropagation();tapSel(${hh.num})"
+        ><span class="selno ${cls}">${on?i+1:""}</span></span>
       ${badge(hh.num,PACK.heads)}
       <span class="hg"><span class="hn">${esc(hh.name)}</span>
         <span class="hm">${hh.jk?esc(hh.jk)+"・":""}${esc(hh.pop)}人 ${esc(hh.odds)} ${esc(hh.kyaku)} 調${esc(hh.oikiri||"-")}</span></span>
+      ${mv}${tekiseiHit(hh)?'<b class="tkm">適</b>':""}
       ${isMk(hh.num)?'<span class="pin">★</span>':""}
       <span class="hsb">HS${esc(hh.hsr)}</span>
-    </div>`).join(""));
-  h.push(`</div>`);
-  /* ---- 買い目（V4のP2から移植）---- */
-  const ord=auto(), cb=combos(), useN=need();
-  h.push(`<div class="sec">展開の読み</div><div class="card"><div class="inner">
-    <div class="seg w">${TENKAI.map(([k,l])=>
-      `<button class="${S.tenkai===k?"on":""}" onclick="setT('${k}')">${esc(l)}</button>`).join("")}</div>
-    <div class="tkrow"><span class="tklb">穴×適性重視</span>
-      <span class="tkn">${tekiseiCount()?`該当${tekiseiCount()}頭`:"該当なし"}</span>
-      <button class="tkbtn ${S.tekisei?"on":""}" onclick="setTeki()"
-        ${tekiseiCount()?"":"disabled"}>${S.tekisei?"ON":"OFF"}</button></div>
-    <div class="note">HS8-10位 × 4番人気以下 × 適性（前寄り脚質／騎手A・B／距離帯複45%以上／前走3着内）の馬を
-      相手へ引き上げます。点数は変わらず中身が入れ替わります。</div>
-  </div></div>`);
+    </div>`;}).join("")}
+    <div class="mini">左の丸をタップで買い目に入れる／行をタップで詳細。
+      並びはHSに展開の補正を足したもの（▲▼＝HS順から動いた馬・適＝穴×適性の該当）。
+      <button class="copyall" onclick="resetSel()">選択をデフォルトに戻す</button></div></div>`);
   h.push(`<div class="sec">買い方</div><div class="card"><div class="inner">
     ${(()=>{const k=kenshuHint(); return k?`<div class="khint">
       <span class="kk">${esc(k.k)}向き</span><span class="kw">${esc(k.why)}</span></div>`:"";})()}
@@ -727,20 +751,6 @@ function drawRace(){
       <span class="lb" style="margin:0">円</span></div>
     ${kaimeSummary(cb)}
   </div></div>`);
-  h.push(`<div class="sec">買い目に使う馬 <span class="cnt">${
-    cb.K.ax===1?"1番目が軸":cb.K.ax===2?"1・2番目が軸":"選んだ順が優先度"}・${useN}頭</span></div>
-  <div class="card">${ord.map(hh=>{
-    const i=S.sel.indexOf(hh.num), on=i>=0, used=on&&i<useN;
-    const cls=!on?"":(cb.K.ax&&i<cb.K.ax?"ax":used?"on":"out");
-    const mv=hh.moved>0?'<span class="up">▲</span>':hh.moved<0?'<span class="dn">▼</span>':"";
-    return `<div class="sr ${on?"":"dim"}" onclick="tapSel(${hh.num})">
-      <span class="selno ${cls}">${on?i+1:""}</span>${badge(hh.num,PACK.heads,true)}
-      <span class="nm">${esc(hh.name)}</span>
-      <span class="mt2">${esc(hh.pop??"-")}人 ${esc(hh.odds??"-")} ${esc(hh.kyaku)} HS${esc(hh.hsr)}${mv}${
-        tekiseiHit(hh)?`<b class="tkm">適${esc(tekiseiSig(hh).join(""))}</b>`:""}</span>
-    </div>`;}).join("")}
-    <div class="mini">タップで選択・解除。並びはHSに展開の補正を足したもの（▲▼＝HS順から動いた馬）。
-      <button class="copyall" onclick="resetSel()">デフォルトに戻す</button></div></div>`);
   if(cb.out.length&&!isTanpuku()){
     h.push(`<details><summary>買い目 ${cb.out.length}点を見る<span class="c">オッズの安い順</span></summary>
       <div style="padding:0 16px 14px"><table class="ktbl">${cb.out.map(c=>({c,o:oddsOf(...c)}))
@@ -763,6 +773,8 @@ function drawRace(){
       <button onclick="setState('見送り')">見送り</button>
     </div></div></div>`);
   $("racebody").innerHTML=h.join("");
+  /* 差し替え直後はレイアウトが未確定で scrollTo が中途半端に効く。次のフレームまで待つ */
+  if(keep) requestAnimationFrame(()=>window.scrollTo(0,_y));
 }
 function togglePick(){
   const p=pickOf();
