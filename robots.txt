@@ -1,0 +1,14 @@
+# D.E.R.B.Y. ビューア（GitHub Pages / hir019inc.github.io/keiba-view）
+#
+# 当日の予想データ（00_published 配下のJSON）を検索結果に載せないためのクロール停止。
+#
+# 効き方と限界（2026-09-13 時点の理解）:
+#   ・これは検索エンジンへの「お願い」であって強制力は無い。従うクローラ（Google/Bing等）だけが従う。
+#   ・すでにインデックスされたページは、これを置いても自動では消えない
+#     （むしろクロールできなくなって古い情報が残ることがある）。消すには Search Console の削除申請が要る。
+#   ・github.com 側のリポジトリページ（github.com/hir019inc/keiba-view）は別ドメインなので
+#     このファイルでは制御できない。publicリポジトリである限りインデックスされうる。
+#
+# 正本はここ（07_viewer/robots.txt）。keiba-view のルートへ手でコピーして配信する。
+User-agent: *
+Disallow: /
